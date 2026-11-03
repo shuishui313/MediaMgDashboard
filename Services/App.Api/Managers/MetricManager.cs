@@ -43,11 +43,13 @@ namespace App.Api.Managers
 
         private readonly IDatabaseAccessor _databaseAccessor;
         private readonly UserContextService _userContextService;
+        private readonly AuditRecorder _auditRecorder;
 
-        public MetricManager(IDatabaseAccessor databaseAccessor, UserContextService userContextService)
+        public MetricManager(IDatabaseAccessor databaseAccessor, UserContextService userContextService, AuditRecorder auditRecorder)
         {
             _databaseAccessor = databaseAccessor;
             _userContextService = userContextService;
+            _auditRecorder = auditRecorder;
         }
 
         /// <summary>
@@ -98,6 +100,16 @@ namespace App.Api.Managers
                 StatDate = statDate
             };
 
+            // 覆盖录入时把旧值留住，审计里能看到「1.2 万 → 3.5 万」这种变化。
+            var before = new
+            {
+                document.Views,
+                document.Likes,
+                document.Comments,
+                document.Shares,
+                document.NewFollowers
+            };
+
             document.Platform = account.Platform;
             document.Views = request.Views;
             document.Likes = request.Likes;
@@ -116,6 +128,23 @@ namespace App.Api.Managers
             {
                 await _databaseAccessor.InsertDocument(document);
             }
+
+            await _auditRecorder.RecordAsync(
+                AuditAction.MetricIngest,
+                AuditTargetType.Metric,
+                document.Id,
+                $"{account.Platform} / {account.Handle}",
+                $"{(updated ? "覆盖" : "录入")}「{account.DisplayName}」{statDate:yyyy-MM-dd} 的日指标。",
+                new[]
+                {
+                    AuditText.NewChange("Views", "播放", AuditText.Number(before.Views), AuditText.Number(document.Views)),
+                    AuditText.NewChange("Likes", "点赞", AuditText.Number(before.Likes), AuditText.Number(document.Likes)),
+                    AuditText.NewChange("Comments", "评论", AuditText.Number(before.Comments), AuditText.Number(document.Comments)),
+                    AuditText.NewChange("Shares", "转发", AuditText.Number(before.Shares), AuditText.Number(document.Shares)),
+                    AuditText.NewChange("NewFollowers", "新增粉丝",
+                        AuditText.Number(before.NewFollowers), AuditText.Number(document.NewFollowers))
+                },
+                detail: updated ? "同账号同日覆盖" : "新增日记录");
 
             return new MetricIngestResultDto
             {
@@ -286,6 +315,19 @@ namespace App.Api.Managers
             if (batch.Count > 0)
             {
                 await _databaseAccessor.UpsertDocuments(batch);
+
+                var summary = $"CSV 导入「{(fileName.Length == 0 ? "未命名.csv" : fileName)}」：新增 {created} 行，覆盖 {updated} 行";
+                if (failed > 0) summary += $"，失败 {failed} 行";
+                if (duplicates > 0) summary += $"，文件内重复 {duplicates} 行";
+
+                await _auditRecorder.RecordAsync(
+                    AuditAction.MetricImport,
+                    AuditTargetType.Metric,
+                    null,
+                    fileName.Length == 0 ? "CSV 批量导入" : fileName,
+                    summary + "。",
+                    detail: $"涉及 {pending.Count} 个账号 / 日期组合",
+                    source: AuditSource.Import);
             }
 
             var parts = new List<string>();

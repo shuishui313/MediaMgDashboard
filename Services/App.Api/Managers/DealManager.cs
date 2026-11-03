@@ -20,11 +20,13 @@ namespace App.Api.Managers
 
         private readonly IDatabaseAccessor _databaseAccessor;
         private readonly UserContextService _userContextService;
+        private readonly AuditRecorder _auditRecorder;
 
-        public DealManager(IDatabaseAccessor databaseAccessor, UserContextService userContextService)
+        public DealManager(IDatabaseAccessor databaseAccessor, UserContextService userContextService, AuditRecorder auditRecorder)
         {
             _databaseAccessor = databaseAccessor;
             _userContextService = userContextService;
+            _auditRecorder = auditRecorder;
         }
 
         [RequireAuthenticated]
@@ -111,8 +113,9 @@ namespace App.Api.Managers
 
             var email = _userContextService.UserEmail ?? string.Empty;
             Deal deal;
+            var isUpdate = request.Id.HasValue && request.Id.Value != Guid.Empty;
 
-            if (request.Id.HasValue && request.Id.Value != Guid.Empty)
+            if (isUpdate)
             {
                 var existing = await _databaseAccessor.GetDocumentById<Deal>(request.Id.Value);
                 if (existing == null)
@@ -133,6 +136,18 @@ namespace App.Api.Managers
                 };
             }
 
+            var before = new
+            {
+                deal.ClientName,
+                deal.Title,
+                deal.Contact,
+                deal.Amount,
+                deal.Stage,
+                deal.OwnerName,
+                deal.NextStep,
+                deal.ExpectedCloseAt
+            };
+
             deal.ClientName = clientName;
             deal.Title = title;
             deal.Contact = (request.Contact ?? string.Empty).Trim();
@@ -149,10 +164,38 @@ namespace App.Api.Managers
 
             await _databaseAccessor.UpsertDocument(deal);
 
+            await _auditRecorder.RecordAsync(
+                AuditAction.DealSave,
+                AuditTargetType.Deal,
+                deal.Id,
+                deal.Title,
+                isUpdate
+                    ? $"编辑商务单「{deal.Title}」（{deal.ClientName}）。"
+                    : $"新建商务单「{deal.Title}」（{deal.ClientName}），当前阶段「{DealStageText.Label(deal.Stage)}」。",
+                new[]
+                {
+                    AuditText.NewChange("ClientName", "客户名",
+                        AuditText.Text(before.ClientName), AuditText.Text(deal.ClientName)),
+                    AuditText.NewChange("Title", "合作事项",
+                        AuditText.Text(before.Title), AuditText.Text(deal.Title)),
+                    AuditText.NewChange("Contact", "对接人",
+                        AuditText.Text(before.Contact), AuditText.Text(deal.Contact)),
+                    AuditText.NewChange("Amount", "报价",
+                        AuditText.Money(before.Amount, deal.Currency), AuditText.Money(deal.Amount, deal.Currency)),
+                    AuditText.NewChange("OwnerName", "负责人",
+                        AuditText.Text(before.OwnerName), AuditText.Text(deal.OwnerName)),
+                    AuditText.NewChange("Stage", "阶段",
+                        DealStageText.Label(before.Stage), DealStageText.Label(deal.Stage)),
+                    AuditText.NewChange("NextStep", "下一步",
+                        AuditText.Text(before.NextStep), AuditText.Text(deal.NextStep)),
+                    AuditText.NewChange("ExpectedCloseAt", "预计签约",
+                        AuditText.Date(before.ExpectedCloseAt), AuditText.Date(deal.ExpectedCloseAt))
+                });
+
             return new SaveDealResultDto
             {
                 Success = true,
-                Message = request.Id.HasValue ? "商务单已更新。" : "商务单已创建。",
+                Message = isUpdate ? "商务单已更新。" : "商务单已创建。",
                 Deal = ExecutionMapper.DealToDto(deal)
             };
         }
@@ -199,6 +242,7 @@ namespace App.Api.Managers
             }
 
             var from = deal.Stage;
+            var previousNextStep = deal.NextStep;
             deal.Stage = target;
             deal.NextStep = string.IsNullOrWhiteSpace(request.NextStep)
                 ? DealStage.DefaultNextStep(target)
@@ -206,6 +250,21 @@ namespace App.Api.Managers
             deal.UpdatedAt = DateTimeOffset.UtcNow;
 
             await _databaseAccessor.UpsertDocument(deal);
+
+            await _auditRecorder.RecordAsync(
+                AuditAction.DealStage,
+                AuditTargetType.Deal,
+                deal.Id,
+                deal.Title,
+                $"商务单「{deal.Title}」阶段从「{DealStageText.Label(from)}」推进到「{DealStageText.Label(target)}」。",
+                new[]
+                {
+                    AuditText.NewChange("Stage", "阶段", DealStageText.Label(from), DealStageText.Label(target)),
+                    AuditText.NewChange("NextStep", "下一步",
+                        AuditText.Text(previousNextStep), AuditText.Text(deal.NextStep))
+                },
+                source: AuditSource.Api,
+                detail: financeOnly ? "财务复核" : string.Empty);
 
             return new UpdateDealStageResultDto
             {

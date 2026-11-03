@@ -55,4 +55,7 @@ public static class TodoPriority
     public static bool IsValid(string? priority) =>
         string.Equals(priority, High, StringComparison.OrdinalIgnoreCase) ||
         string.Equals(priority, Normal, StringComparison.OrdinalIgnoreCase);
+
+    public static string Label(string? priority) =>
+        string.Equals(priority, High, StringComparison.OrdinalIgnoreCase) ? "高优先" : "常规";
 }

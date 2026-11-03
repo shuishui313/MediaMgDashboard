@@ -205,6 +205,8 @@ namespace App.Api
             services.AddScoped<DealManager>();
             services.AddScoped<ContentPlanManager>();
             services.AddScoped<TodoManager>();
+            services.AddScoped<AuditManager>();
+            services.AddScoped<AuditRecorder>();
             services.AddScoped<DashboardSeeder>();
             services.AddScoped<ExecutionSeeder>();
             services.AddScoped<AuthenticatorEngine>();

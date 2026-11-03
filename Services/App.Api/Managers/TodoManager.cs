@@ -20,11 +20,13 @@ namespace App.Api.Managers
 
         private readonly IDatabaseAccessor _databaseAccessor;
         private readonly UserContextService _userContextService;
+        private readonly AuditRecorder _auditRecorder;
 
-        public TodoManager(IDatabaseAccessor databaseAccessor, UserContextService userContextService)
+        public TodoManager(IDatabaseAccessor databaseAccessor, UserContextService userContextService, AuditRecorder auditRecorder)
         {
             _databaseAccessor = databaseAccessor;
             _userContextService = userContextService;
+            _auditRecorder = auditRecorder;
         }
 
         [RequireAuthenticated]
@@ -85,7 +87,7 @@ namespace App.Api.Managers
                 dueDate = parsed;
             }
 
-            await _databaseAccessor.InsertDocument(new TodoItem
+            var todo = new TodoItem
             {
                 Title = title,
                 OwnerRole = ownerRole,
@@ -95,7 +97,22 @@ namespace App.Api.Managers
                 Status = TodoStatus.Open,
                 CreatedBy = _userContextService.UserEmail ?? string.Empty,
                 CreatedAt = DateTimeOffset.UtcNow
-            });
+            };
+
+            await _databaseAccessor.InsertDocument(todo);
+
+            await _auditRecorder.RecordAsync(
+                AuditAction.TodoCreate,
+                AuditTargetType.Todo,
+                todo.Id,
+                title,
+                $"新建待办「{title}」，负责角色「{RoleText.Label(ownerRole)}」。",
+                new[]
+                {
+                    AuditText.NewChange("OwnerRole", "负责角色", "—", RoleText.Label(ownerRole)),
+                    AuditText.NewChange("Priority", "优先级", "—", TodoPriority.Label(priority)),
+                    AuditText.NewChange("DueDate", "截止日", "—", AuditText.Date(dueDate))
+                });
 
             return new OperationResultDto { Success = true, Message = $"待办「{title}」已创建。" };
         }
@@ -128,6 +145,17 @@ namespace App.Api.Managers
             todo.DoneBy = _userContextService.UserEmail ?? string.Empty;
 
             await _databaseAccessor.UpsertDocument(todo);
+
+            await _auditRecorder.RecordAsync(
+                AuditAction.TodoComplete,
+                AuditTargetType.Todo,
+                todo.Id,
+                todo.Title,
+                $"完成待办「{todo.Title}」。",
+                new[]
+                {
+                    AuditText.NewChange("Status", "状态", "未完成", "已完成")
+                });
 
             return new OperationResultDto { Success = true, Message = $"待办「{todo.Title}」已完成。" };
         }

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Link2, RefreshCw, Save, SlidersHorizontal } from 'lucide-react';
+import AuditLogPanel from '@/components/dashboard/AuditLogPanel';
 import PageShell from '@/components/dashboard/PageShell';
 import { Panel, PanelBody, PanelHeader } from '@/components/dashboard/Panel';
 import StatusPill from '@/components/dashboard/StatusPill';
@@ -298,6 +299,8 @@ const SettingsView = () => {
           )}
         </PanelBody>
       </Panel>
+
+      <AuditLogPanel />
     </PageShell>
   );
 };

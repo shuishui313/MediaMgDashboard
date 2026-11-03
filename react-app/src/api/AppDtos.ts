@@ -350,6 +350,53 @@ export interface SaveSignalThresholdResultDto {
   Thresholds: SignalThresholdDto;
 }
 
+// ---------- 操作审计 · AuditManager ----------
+
+export interface AuditFieldChangeDto {
+  Field: string;
+  Label: string;
+  Before: string;
+  After: string;
+}
+
+export interface AuditLogDto {
+  Id: string;
+  /** yyyy-MM-dd HH:mm（本地时间） */
+  At: string;
+  /** yyyy-MM-dd，按天分组用 */
+  AtDate: string;
+  ActorEmail: string;
+  ActorName: string;
+  Action: string;
+  ActionLabel: string;
+  TargetType: string;
+  TargetTypeLabel: string;
+  TargetId: string;
+  TargetLabel: string;
+  Summary: string;
+  Changes: AuditFieldChangeDto[];
+  Source: string;
+  SourceLabel: string;
+  Detail: string;
+}
+
+export interface AuditLogListRequestDto {
+  Action?: string;
+  TargetType?: string;
+  Keyword?: string;
+  FromDate?: string;
+  ToDate?: string;
+  Take?: number;
+  Skip?: number;
+}
+
+export interface AuditLogListDto {
+  Items: AuditLogDto[];
+  Total: number;
+  RetentionDays: number;
+  PurgedCount: number;
+}
+
 // ---------- 商务单 · DealManager ----------
 
 export interface DealDto {

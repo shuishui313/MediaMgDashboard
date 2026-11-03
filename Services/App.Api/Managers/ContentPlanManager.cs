@@ -20,11 +20,13 @@ namespace App.Api.Managers
 
         private readonly IDatabaseAccessor _databaseAccessor;
         private readonly UserContextService _userContextService;
+        private readonly AuditRecorder _auditRecorder;
 
-        public ContentPlanManager(IDatabaseAccessor databaseAccessor, UserContextService userContextService)
+        public ContentPlanManager(IDatabaseAccessor databaseAccessor, UserContextService userContextService, AuditRecorder auditRecorder)
         {
             _databaseAccessor = databaseAccessor;
             _userContextService = userContextService;
+            _auditRecorder = auditRecorder;
         }
 
         [RequireAuthenticated]
@@ -149,6 +151,17 @@ namespace App.Api.Managers
                 };
             }
 
+            var before = new
+            {
+                plan.Title,
+                plan.Platforms,
+                plan.PlannedAt,
+                plan.Direction,
+                plan.Score,
+                plan.AssigneeName,
+                plan.DealId
+            };
+
             plan.Title = title;
             plan.Platforms = platforms;
             plan.PlannedAt = plannedAt;
@@ -164,6 +177,31 @@ namespace App.Api.Managers
             await _databaseAccessor.UpsertDocument(plan);
 
             var dealTitles = await LoadDealTitlesAsync();
+            string DealLabel(Guid? id) =>
+                id.HasValue && dealTitles.TryGetValue(id.Value, out var title) ? title : "未关联";
+
+            await _auditRecorder.RecordAsync(
+                AuditAction.PlanSave,
+                AuditTargetType.ContentPlan,
+                plan.Id,
+                plan.Title,
+                request.Id.HasValue && request.Id.Value != Guid.Empty
+                    ? $"编辑内容计划「{plan.Title}」。"
+                    : $"新建内容计划「{plan.Title}」，当前状态「{PlanStatusText.Label(plan.Status)}」。",
+                new[]
+                {
+                    AuditText.NewChange("Title", "计划名", AuditText.Text(before.Title), AuditText.Text(plan.Title)),
+                    AuditText.NewChange("Platforms", "覆盖平台",
+                        AuditText.Platforms(before.Platforms), AuditText.Platforms(plan.Platforms)),
+                    AuditText.NewChange("PlannedAt", "排期", AuditText.Date(before.PlannedAt), AuditText.Date(plan.PlannedAt)),
+                    AuditText.NewChange("Direction", "内容方向",
+                        AuditText.Text(before.Direction), AuditText.Text(plan.Direction)),
+                    AuditText.NewChange("Score", "机会分", AuditText.Score(before.Score), AuditText.Score(plan.Score)),
+                    AuditText.NewChange("AssigneeName", "责任人",
+                        AuditText.Text(before.AssigneeName), AuditText.Text(plan.AssigneeName)),
+                    AuditText.NewChange("DealId", "关联商务单", DealLabel(before.DealId), DealLabel(plan.DealId))
+                });
+
             return new SavePlanResultDto
             {
                 Success = true,
@@ -198,6 +236,17 @@ namespace App.Api.Managers
             plan.UpdatedAt = DateTimeOffset.UtcNow;
 
             await _databaseAccessor.UpsertDocument(plan);
+
+            await _auditRecorder.RecordAsync(
+                AuditAction.PlanStatus,
+                AuditTargetType.ContentPlan,
+                plan.Id,
+                plan.Title,
+                $"内容计划「{plan.Title}」状态从「{PlanStatusText.Label(from)}」推进到「{PlanStatusText.Label(target)}」。",
+                new[]
+                {
+                    AuditText.NewChange("Status", "状态", PlanStatusText.Label(from), PlanStatusText.Label(target))
+                });
 
             var dealTitles = await LoadDealTitlesAsync();
             return new UpdatePlanStatusResultDto

@@ -28,11 +28,13 @@ namespace App.Api.Managers
 
         private readonly IDatabaseAccessor _databaseAccessor;
         private readonly UserContextService _userContextService;
+        private readonly AuditRecorder _auditRecorder;
 
-        public SettingsManager(IDatabaseAccessor databaseAccessor, UserContextService userContextService)
+        public SettingsManager(IDatabaseAccessor databaseAccessor, UserContextService userContextService, AuditRecorder auditRecorder)
         {
             _databaseAccessor = databaseAccessor;
             _userContextService = userContextService;
+            _auditRecorder = auditRecorder;
         }
 
         /// <summary>
@@ -62,6 +64,9 @@ namespace App.Api.Managers
                 };
             }
 
+            // 先取旧值，写完才有 diff 可记；库里没有这条文档时 LoadAsync 返回默认阈值。
+            var previous = await SignalThresholdStore.LoadAsync(_databaseAccessor);
+
             var config = new SignalThresholdConfig
             {
                 Id = SignalThresholdDefaults.SingletonId,
@@ -75,6 +80,30 @@ namespace App.Api.Managers
             };
 
             await _databaseAccessor.UpsertDocument(config);
+
+            var changes = new List<AuditFieldChange>
+            {
+                AuditText.NewChange("BreakoutMultiplier", "爆款倍数",
+                    AuditText.Decimal(previous.BreakoutMultiplier, " 倍"), AuditText.Decimal(config.BreakoutMultiplier, " 倍")),
+                AuditText.NewChange("BreakoutMinViews", "爆款播放下限",
+                    AuditText.Number(previous.BreakoutMinViews), AuditText.Number(config.BreakoutMinViews)),
+                AuditText.NewChange("DeclineThresholdPercent", "掉速幅度",
+                    AuditText.Decimal(previous.DeclineThresholdPercent, "%"), AuditText.Decimal(config.DeclineThresholdPercent, "%")),
+                AuditText.NewChange("LowInteractionRatePercent", "互动率下限",
+                    AuditText.Decimal(previous.LowInteractionRatePercent, "%"), AuditText.Decimal(config.LowInteractionRatePercent, "%")),
+                AuditText.NewChange("StaleDays", "停更天数",
+                    $"{previous.StaleDays} 天", $"{config.StaleDays} 天")
+            };
+
+            await _auditRecorder.RecordAsync(
+                AuditAction.ThresholdUpdate,
+                AuditTargetType.Threshold,
+                SignalThresholdDefaults.SingletonId,
+                "机会与风险判定阈值",
+                changes.Count(change => change.Before != change.After) == 0
+                    ? "保存了阈值，但各项取值与原来一致。"
+                    : "调整了机会与风险的判定阈值。",
+                changes);
 
             return new SaveSignalThresholdResultDto
             {

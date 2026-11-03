@@ -1,17 +1,17 @@
 # HANDOFF
 
-> 交接文档 · 更新于 2026-10-28
-> 仓库：`gsspai/mediaai`（public） · 分支 `main` · 工作区改动未提交（本轮执行列表接接口）
+> 交接文档 · 更新于 2026-11-03
+> 仓库：`shuishui313/MediaMgDashboard`（public，2026-11-03 从 `gsspai/mediaai` 迁入） · 分支 `main` · 工作区改动未提交（本轮操作审计）
 
 ---
 
 ## 1. 当前进度
 
-最近几步：产品文档静态站点（`81ba382`）、认证闭环（`4100139`）、首页指标接真实接口（`3e1679c`）、账号与手工录入闭环（`65ea081`）、爆款机会 / 限流风险接真实计算、阈值可配 + CSV 批量导入（`8d43505`）、业务角色权限落地（`58be3ba`）、**执行列表三块接真实接口 + 商务单 / 内容计划详情页（本轮，未提交）**。
+最近几步：产品文档静态站点（`81ba382`）、认证闭环（`4100139`）、首页指标接真实接口（`3e1679c`）、账号与手工录入闭环（`65ea081`）、爆款机会 / 限流风险接真实计算、阈值可配 + CSV 批量导入（`8d43505`）、业务角色权限落地（`58be3ba`）、执行列表三块接真实接口（`55eba5b`）、**操作审计 + 仓库迁到 `shuishui313/MediaMgDashboard`（本轮，未提交）**。
 
 已到达的状态：
 
-- 产品文档已发布为静态站点 **https://gsspai.github.io/mediaai/**，手机与桌面都能正常打开。
+- 产品文档已发布为静态站点 **https://shuishui313.github.io/MediaMgDashboard/**，手机与桌面都能正常打开。
 - 登录可用：未登录访问任意受保护路由 → `/login` → 登录 → 回到来源路径；飞书免登未接入。
 - 首页四个 KPI 与平台走势来自 `DashboardManager.GetSummary`，每个数字带「数据来源」与回溯文案；接口失败时显式降级为「静态示例数据」，不伪装成真实数据。
 - 数据模型与指标口径已写进 README「看板指标与数据模型」一节。
@@ -20,8 +20,9 @@
 
 - 权限矩阵已生效：阈值仅管理员可读写，账号与指标写接口限管理员 / 运营，访客只读；越权返回 403 + 中文原因，前端同步隐藏入口。
 - 首页执行列表三块（商务单 / 内容计划 / 跨角色待办）与管理层概览来自 `Deal` / `ContentPlan` / `TodoItem` 三个文档，`/business`、`/business/:dealId`、`/plans`、`/plans/:planId` 四个页面均可用（新建、编辑、阶段推进/复核）。待办里的「自动」条目由单据状态推导，不落库。
+- 操作审计已落地：11 类写操作落 `AuditLog`（字段级前后值），`/settings` 底部可筛选、按天分组、展开看 diff；只保留 90 天，查询时自动清理。仅管理员可读。
 
-**未开始**：飞书免登、`RoleMappingConfig` / 用户组同步、平台 API 同步、飞书审批回写报价阶段、操作审计。`/connections/:platform` 仍是占位。
+**未开始**：飞书免登、`RoleMappingConfig` / 用户组同步、平台 API 同步、飞书审批回写报价阶段、审计导出。`/connections/:platform` 仍是占位。
 
 ---
 
@@ -31,7 +32,8 @@
 
 | 版本 | 时间 | 内容 |
 | --- | --- | --- |
-| （未提交） | 2026-10-28 | 执行列表接真实接口：`Deal` / `ContentPlan` / `TodoItem` + 三个 Manager + 四个页面；删除 `/analysis/:viewId` |
+| （未提交） | 2026-11-03 | 操作审计（`AuditLog` + `AuditRecorder` + 设置页面板）；仓库迁到 `shuishui313/MediaMgDashboard` |
+| `55eba5b` | 2026-10-28 | 执行列表接真实接口：`Deal` / `ContentPlan` / `TodoItem` + 三个 Manager + 四个页面；删除 `/analysis/:viewId` |
 | `58be3ba` | 2026-10-28 | 业务角色权限落地：`[RequireRole]`、403 中文原因、管理员引导、前端入口按角色显隐 |
 | `8d43505` | 2026-10-27 | CSV 批量导入（`MetricManager.ImportCsv`）与可配判定阈值（`/settings`）；作者邮箱改为 GitHub noreply |
 | `3e1679c` | 2026-10-19 | 首页 KPI 与平台走势接入 `DashboardManager.GetSummary`，新增 `PlatformAccount` / `MetricDaily` |
@@ -275,6 +277,25 @@
 - 界面级 `/tmp/ui_exec.py`（CDP + 无头 Chrome）22 项：首页三个 Tab 显示真实单据与「自动」标记、管理层概览、商务/计划列表与详情、访客看不到写入口与推进按钮、`/analysis/whatever` 落到 404；额外用对话框实际新建了一条商务单（填写 → 保存 → 列表出现「界面验收合作」）。
 - 未验证：`/connections/:platform` 仍是占位；飞书审批回调推进阶段未接，阶段推进目前靠人点。
 
+### 2.13 操作审计 + 仓库迁移（本轮）
+
+代码：
+
+- `Contracts.Domain.Database.AuditLog`：时间、操作人（`ActorAuthId` / `ActorEmail` / `ActorName`）、`Action` + `ActionLabel`、对象类型 / ID / 名称、`Summary`、字段级 `Changes`、`Source`（`api` / `feishu` / `import`）、`Detail`。同文件的 `AuditAction` / `AuditTargetType` / `AuditSource` 是标识与中文名的唯一来源。
+- `Utilities/AuditRecorder`：唯一写入入口。写失败只记日志不抛异常（数据已落库却返回 500 会诱发重复提交）；自动过滤「改前 = 改后」的空变更；`PurgeExpiredAsync` 清理 90 天前记录。
+- `Utilities/AuditText`：金额、日期、平台、角色、优先级、接入状态的统一格式化，保证 diff 里不出现 GUID、空串或原始英文。
+- `AuditManager.ListLogs`（`[RequireRole(admin)]`）：按动作、对象类型、关键词、日期筛选 + 分页；查询时顺带清理过期记录并回报 `PurgedCount`；日期按服务器本地日期比较（库里存 UTC，直接比 DateOnly 会把 0–8 点的记录算错一天）。
+- 11 个写入点：阈值保存、账号新增/编辑、停用、指标录入（覆盖时记旧值）、CSV 导入（汇总一条，来源 `import`）、商务单新增/编辑、阶段推进（财务复核写进 `Detail`）、计划新增/编辑（关联商务单显示标题而非 ID）、状态推进、待办新建、待办完成。**失败的操作不写审计**。
+- 前端：`/settings` 底部「最近写操作」面板（`AuditLogPanel`）——动作 / 对象类型下拉、日期区间、关键词 300ms 防抖、按天分组、字段级 diff 展开、加载更多、保留期提示。
+- 迁移：`origin` 指向 `https://github.com/shuishui313/MediaMgDashboard.git`，历史全量推送；README / HANDOFF 里的仓库与 Pages 地址同步替换。旧仓库 `gsspai/mediaai` 停用。
+
+验证：
+
+- `dotnet build` 0 错误、`tsc --noEmit` 0 错误、`npm run build` 成功、`vitest run` 17 条通过、新增文件 lint 0 错误。
+- 隔离实例（`AppConfiguration__AppName=MediaAI-Audit2`，5133）+ `/tmp/test_audit.py` 45 项：11 类写操作全部落库且字段前后值正确（阈值 5 项、播放 10,000 → 25,000、账号粉丝 1,234 → 2,345、阶段 线索 → 报价中、计划 选题中 → 评分中）；操作人、来源标签（界面操作 / 批量导入）、动作中文名正确；失败操作不产生记录；按动作 / 对象类型 / 关键词 / 日期筛选正确；访客读审计 403；手工塞入一条 2025-01-01 的记录后，`PurgedCount = 1`、总数回到原值、返回结果里不再出现该条。
+- 界面级 `/tmp/ui_audit.py`（CDP + 无头 Chrome，3103/9226）12 项：设置页出现审计面板、保留期文案、列表含阈值与阶段记录、操作人邮箱、来源标签、「变更 n 项」按钮、展开后能看到「阶段 / 线索 / 报价中」与「→」、收起按钮、两个筛选下拉。
+- 环境备注：本机 `~/Tools/dotnet/shared` 在 10-29 被清空过，已用 `dotnet-install.sh` 补装 `Microsoft.NETCore.App` 与 `Microsoft.AspNetCore.App` 8.0；后台进程活不过单次命令，验证脚本要「同一条命令内启动 → 跑测试 → kill」。
+
 ---
 
 ## 3. 遗留问题
@@ -289,6 +310,7 @@
 | 4b | 指标来源为手工录入 + CSV 导入，平台 API 同步未接 | 已能用表格灌数，但仍需人导出再上传；`Source = api` 尚无写入方 | 待做（M1-4） |
 | 4c | 商务单阶段推进靠人点，飞书报价审批未接 | 报价复核有记录但没有审批留痕；`DealManager.UpdateDealStage` 已留好入口给回调 | 待做（M2-1） |
 | 4d | 内容计划与待办没有删除 / 批量导入 | 录错了只能改状态（归档 / 完成），不能物理删除 | 待定 |
+| 4e | 审计记录只能在线看 | 没有导出 / 归档；保留期固定 90 天不可配；`AuditLog.json` 增长后每次查询会全量读（本地 JSON 实现） | 待定 |
 | 5 | ~~`/` 未挂 `ProtectedRoute`~~ | 已完成 | ✅ |
 | 6 | 无任何自动化测试与 CI | 改动靠人工验证 | 未规划 |
 | 6b | `npm run lint` 此前跑不起来（`eslint.config.js` 引 `typescript-eslint` 但依赖里没有），本轮补了 `typescript-eslint@8.1.0` 后恢复 | 存量 24 个 error（多为 `no-explicit-any`、`vite.config.ts` 空 block），本轮改动文件 0 error | 存量待清 |
@@ -309,10 +331,10 @@
 
 1. ~~**手工录入 / 接口同步入口**：`MetricManager.UpsertDaily` + `PlatformAccountManager` 增删改查 + 「平台连接」页~~ — 已完成手工模式（见 2.7），接口同步仍未做
 2. ~~**首页剩余区块接接口**：爆款机会、限流风险~~ — 已完成（见 2.8）
-2b. ~~**阈值可配**：把 `BuildSignals` 的四个常量挪到 `SignalThresholdConfig` 文档，管理面板可改，改完 `SignalPolicy` 自动跟着变~~ — 已完成（见 2.9）；`[RequireRole("admin")]` 已接（见 2.11），操作审计未做
+2b. ~~**阈值可配**：把 `BuildSignals` 的四个常量挪到 `SignalThresholdConfig` 文档，管理面板可改，改完 `SignalPolicy` 自动跟着变~~ — 已完成（见 2.9）；`[RequireRole("admin")]` 已接（见 2.11），审计见 2.13
 3. ~~**批量导入**：给运营一个 CSV 导入（账号、日期、播放、互动），复用 `MetricManager` 的校验~~ — 已完成（见 2.10，`Source = csv`）；后续可加导入历史与失败行导出
 3b. ~~**执行列表接接口**：`DealManager` / `ContentPlanManager` / `TodoManager` + 商务单与内容计划页面~~ — 已完成（见 2.12）；删除 / 导入、飞书审批推进未做
-4. **操作审计**：`AuditLog` 记录阈值、账号、指标、商务单阶段变更（谁、何时、前后值），设置页 / 详情页可查
+4. ~~**操作审计**：`AuditLog` 记录阈值、账号、指标、商务单阶段变更（谁、何时、前后值），设置页 / 详情页可查~~ — 已完成（见 2.13）；导出与保留期配置未做
 5. **飞书免登**：`/auth/feishu/callback` + 登录页飞书入口，与账号登录共用同一签发出口
 6. **`RoleMappingConfig`**（飞书用户组 → 角色，存库热改）+ `SyncDirectory` 定时同步，离职置 `Disabled`
 7. **`/connections/:platform`**：账号授权状态、同步失败重试、平台限额（当前仍是占位）
@@ -337,6 +359,9 @@
 - **Manager 里不要写 public 的辅助方法**（例如「取首页前 3 条」）。反射会把 public 方法一并当成可调用接口，返回 `List<T>` 的直接被约定检查拒绝；聚合逻辑放在 `DashboardManager` 内部或 `Utilities` 里。
 - **阶段 / 状态文案只在后端维护一份**（`Utilities/ExecutionText.cs` 的 `DealStageText` / `PlanStatusText` / `RoleText`），DTO 直接下发 Label 与 Tone；前端 `utils/execution.ts` 里的同名 map 只用于筛选下拉与按钮文案。
 - 删掉 `Deal.json` / `ContentPlan.json` / `TodoItem.json` 会重置商务单、内容计划与人工待办（`ExecutionSeeder` 只在 Development 且没有 Deal 时写示例数据）。
+- **新增写接口时记得加审计**：写完库调用 `_auditRecorder.RecordAsync(...)`，只传白名单字段的前后值；失败分支不要写（否则「被拒绝的操作」会出现在审计里）。可用 `AuditText.*` 格式化，避免把 GUID、空串、英文标识塞进 diff。
+- 审计 `AuditLog.json` 会持续增长，本地 JSON 实现每次查询全量读取；切 Postgres 前不要指望它扛大数据量。需要重置：删掉 `~/CodeBuddy/Resources/<AppName>/AuditLog.json`。
+- 仓库已迁到 `shuishui313/MediaMgDashboard`，**Pages 需要在仓库 Settings → Pages 重新开启一次**（`main` / `/docs`），线上地址变为 `https://shuishui313.github.io/MediaMgDashboard/`；旧仓库 `gsspai/mediaai` 不再推送。
 
 ### 5.2 本地环境
 
@@ -357,7 +382,7 @@
 
 ### 5.4 验证现状
 
-线上地址 `https://gsspai.github.io/mediaai/` 已确认返回 200，且含移动端 CSS（`max-width:768px`）。桌面与四档移动视口均无横向溢出。
+线上地址 `https://shuishui313.github.io/MediaMgDashboard/` 已确认返回 200，且含移动端 CSS（`max-width:768px`）。桌面与四档移动视口均无横向溢出。
 
 2.9 / 2.10 的验证记录：
 

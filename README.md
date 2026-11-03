@@ -2,7 +2,7 @@
 
 MediaAI 面向个人自媒体矩阵的日常运营：把多个平台账号的播放与互动、爆款机会、限流风险，连同商务合作与内容排期收敛到同一块屏幕——先看态势，再判断机会与风险，最后落到「谁、在哪一步、做什么」。
 
-定位、角色、指标口径与界面结构的完整说明见[产品文档](https://gsspai.github.io/mediaai/)。
+定位、角色、指标口径与界面结构的完整说明见[产品文档](https://shuishui313.github.io/MediaMgDashboard/)。
 
 当前仓库处于**前端原型阶段**：工作台页面、角色视图与设计系统已就绪，页面数据仍为前端 mock，后端仅保留认证骨架。
 
@@ -30,14 +30,14 @@ MediaAI 面向个人自媒体矩阵的日常运营：把多个平台账号的播
 
 | 文档 | 内容 | 位置 |
 | --- | --- | --- |
-| 产品文档 | 定位、角色、信息架构、界面结构、关键流程、指标口径、权限、分期、验收 | https://gsspai.github.io/mediaai/ |
+| 产品文档 | 定位、角色、信息架构、界面结构、关键流程、指标口径、权限、分期、验收 | https://shuishui313.github.io/MediaMgDashboard/ |
 | 落地实施方案 | 数据模型、Manager 接口清单、前端改造、任务拆解与工时 | [docs/implementation-plan.md](docs/implementation-plan.md) |
 | 认证流程 | `ServiceInvoker` 的 JWT 校验与角色拦截 | [docs/service-invoker-auth-flow.md](docs/service-invoker-auth-flow.md) |
 | 流式 RPC | 流式调用的传输与生命周期 | [docs/service-invoker-streaming.md](docs/service-invoker-streaming.md) |
 
 产品文档是单文件静态页（`docs/product-overview.html`，入口页 `docs/index.html`），无构建与外部依赖，由 GitHub Pages 从 `main` 分支的 `/docs` 目录发布。
 
-已启用：仓库 **Settings → Pages → Source `Deploy from a branch` → Branch `main`、目录 `/docs`**，访问 https://gsspai.github.io/mediaai/ 即可。推送到 `main` 后约 1 分钟自动发布，无需构建。
+仓库已于 2026-11-03 迁到 **`shuishui313/MediaMgDashboard`**（旧的 `gsspai/mediaai` 停用）。Pages 需要在**新仓库** Settings → Pages 开启一次：Source `Deploy from a branch`、Branch `main`、目录 `/docs`，之后访问 https://shuishui313.github.io/MediaMgDashboard/ ；推送到 `main` 约 1 分钟自动发布，无需构建。
 
 ---
 
@@ -48,8 +48,9 @@ MediaAI 面向个人自媒体矩阵的日常运营：把多个平台账号的播
 | 工作台首页（`/`） | 已完成（全部区块接接口） | 四个 KPI、平台走势、爆款机会、限流风险、执行列表三块（商务 / 计划 / 待办）与管理层概览均由 `DashboardManager.GetSummary` 现场返回 |
 | 角色化视图 | 已完成（前端） | 按角色决定默认执行列表，`admin` 额外展示管理层概览 |
 | 接口权限 | 已接入首批 | 阈值仅 `admin`，账号与指标写接口限 `admin` / `operations`；越权返回 403 + 中文原因，见[角色与权限](#角色与权限) |
+| 操作审计 | 已完成 | 11 类写操作落 `AuditLog`，`/settings` 可筛选、展开字段级 diff；仅管理员可读，保留 90 天 |
 | 统一设计系统 | 已完成 | `PageShell` / `Panel` / `SectionHeader` / `StatusPill` / `TrendChart` / `SegmentedTabs` |
-| 产品文档 | 已发布 | [gsspai.github.io/mediaai](https://gsspai.github.io/mediaai/)，含定位、角色、指标口径与验收标准 |
+| 产品文档 | 已发布（仓库迁移后需重新开启 Pages） | 目标地址 [shuishui313.github.io/MediaMgDashboard](https://shuishui313.github.io/MediaMgDashboard/)，含定位、角色、指标口径与验收标准 |
 | 平台连接页（`/connections`） | 已完成（手工 + CSV） | 账号增删改查、停用、手工录入日指标、CSV 批量导入、最近录入明细；`/connections/:platform` 仍是占位，OAuth 授权未接 |
 | 商务与计划页 | 已完成（无审批流） | `/business`、`/business/:dealId`、`/plans`、`/plans/:planId` 均为真实数据；报价审批仍靠人工推进，未接飞书审批 |
 | 详情页 | 部分 | `/connections/:platform` 仍是占位；`/settings` 已实现阈值配置；`/analysis/:viewId` 已移除 |
@@ -218,6 +219,7 @@ POST /api/stream   → NDJSON 流式返回（方法返回 IAsyncEnumerable<T>）
 | `Deal` | 商务合作单 | `ClientName`、`Title`、`Amount`、`Stage`、`OwnerName`、`OwnerAuthId`、`NextStep`、`ExpectedCloseAt`、`Notes`、`CreatedBy` |
 | `ContentPlan` | 内容计划 | `Title`、`Platforms`、`PlannedAt`、`Status`、`Direction`、`Score`、`AssigneeName`、`DealId`、`Link` |
 | `TodoItem` | 人工待办 | `Title`、`OwnerRole`、`Priority`、`DueDate`、`Href`、`Status`、`DoneAt`、`DoneBy` |
+| `AuditLog` | 操作审计 | `At`、`ActorEmail` / `ActorAuthId`、`Action` / `ActionLabel`、`TargetType` / `TargetId` / `TargetLabel`、`Summary`、`Changes`（字段级前后值）、`Source`、`Detail` |
 
 - `MetricDaily.Source` 取 `api`（平台接口同步）/ `manual`（人工录入）/ `csv`（CSV 批量导入）/ `seed`（开发态种子），返回体里的 `DataSource` 会把四者计数摊开，界面直接显示「开发态示例数据 · 5 个账号 / 35 条日记录」「CSV 导入 12 条」这类文案。**新增数据入口时必须写入 `Source` 与 `RecordedBy`，否则数字无法回溯。**
 - 环比口径：把一个区间对半切成前段与后段，用**日均播放**比较（`DailyChangeRate`），而不是两段总量——7 天区间前 3 天后 4 天，用总量比会系统性低估后段。
@@ -295,6 +297,26 @@ POST /api/stream   → NDJSON 流式返回（方法返回 IAsyncEnumerable<T>）
 
 开发态种子数据由 `Utilities/ExecutionSeeder.cs` 写入（4 条商务单 / 4 条内容计划 / 2 条人工待办，`CreatedBy = seed:development`），界面打「示例」标记，`Execution.SourceLabel` 会写明「含开发态示例数据」。重置：删掉本地数据目录下的 `Deal.json`、`ContentPlan.json`、`TodoItem.json`。
 
+### 操作审计
+
+每次写操作在写库成功后落一条 `AuditLog`，记录谁、何时、对哪个对象、改了哪些字段。写入入口只有一个：`Utilities/AuditRecorder.RecordAsync`。
+
+| 动作 | 触发点 | 记录内容 |
+| --- | --- | --- |
+| `threshold.update` | `SettingsManager.SaveSignalThresholds` | 五项阈值的前后值 |
+| `account.save` / `account.disable` | `PlatformAccountManager` | 平台、账号标识、展示名、接入状态、粉丝数 |
+| `metric.ingest` | `MetricManager.IngestManual` | 播放 / 点赞 / 评论 / 转发 / 新增粉丝（覆盖时旧值一并记录） |
+| `metric.import` | `MetricManager.ImportCsv` | 文件名、新增 / 覆盖 / 失败行数（来源 `import`） |
+| `deal.save` / `deal.stage` | `DealManager` | 客户、事项、报价、阶段、负责人、下一步、预计签约；财务复核写进 `Detail` |
+| `plan.save` / `plan.status` | `ContentPlanManager` | 计划名、平台、排期、方向、机会分、责任人、关联商务单（显示标题） |
+| `todo.create` / `todo.complete` | `TodoManager` | 负责角色、优先级、截止日 / 状态 |
+
+- 只记白名单字段的前后值，密码、token、完整请求体一律不落库；值统一用 `AuditText` 格式化（金额带千分位、空值写「未填写」、角色与状态转中文）。
+- **失败的操作不写审计**：被拒绝的请求不会出现在记录里，避免把「没发生的事」记成已发生。
+- 审计写失败不影响业务：`AuditRecorder` 吞异常只记日志，否则数据已落库却返回 500，会诱导用户重复提交。
+- 查询接口 `AuditManager.ListLogs` 仅 `admin`：按动作、对象类型、关键词、日期区间筛选 + 分页；查询时顺带清理 90 天前的记录并回报清理条数。
+- 前端在 `/settings` 底部（「最近写操作」），按天分组，默认只显示摘要，点「变更 n 项」展开字段级 diff。
+
 ### 机会与风险判定规则
 
 `DashboardManager.GetSummary` 同时返回 `Opportunities` 与 `Risks`，两者都从区间内的 `MetricDaily` 现场算，结论文案里的 `SignalPolicy` 由后端按**当前生效阈值**生成，前端直接展示，避免「这些结论哪来的」说不清。
@@ -318,7 +340,7 @@ POST /api/stream   → NDJSON 流式返回（方法返回 IAsyncEnumerable<T>）
 
 ## 角色与权限
 
-界面名称、默认视图与[产品文档 · 用户与角色](https://gsspai.github.io/mediaai/)一列一致：
+界面名称、默认视图与[产品文档 · 用户与角色](https://shuishui313.github.io/MediaMgDashboard/)一列一致：
 
 | 角色标识 | 界面名称 | 默认视图 |
 | --- | --- | --- |
@@ -433,7 +455,7 @@ git status --ignored --short | grep -E "\.env|appsettings"
 
 ## 下一步计划
 
-> 产品定位、角色与指标口径见[产品文档](https://gsspai.github.io/mediaai/)；完整任务拆解（M0-M4）、数据模型字段、Manager 接口清单与验收标准见 [docs/implementation-plan.md](docs/implementation-plan.md)。
+> 产品定位、角色与指标口径见[产品文档](https://shuishui313.github.io/MediaMgDashboard/)；完整任务拆解（M0-M4）、数据模型字段、Manager 接口清单与验收标准见 [docs/implementation-plan.md](docs/implementation-plan.md)。
 
 ### P0 — 打通「有数据、有身份」的主链路
 
@@ -467,4 +489,4 @@ git status --ignored --short | grep -E "\.env|appsettings"
 - 商务单走完飞书审批后列表阶段自动更新，非法流转被拒；
 - 页面不出现硬编码主题色，暗色模式下无不可读文本。
 
-完整验收清单（M3 逐条勾选）见[产品文档 · 验收标准](https://gsspai.github.io/mediaai/)。
+完整验收清单（M3 逐条勾选）见[产品文档 · 验收标准](https://shuishui313.github.io/MediaMgDashboard/)。

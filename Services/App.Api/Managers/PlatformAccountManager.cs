@@ -16,11 +16,13 @@ namespace App.Api.Managers
     {
         private readonly IDatabaseAccessor _databaseAccessor;
         private readonly UserContextService _userContextService;
+        private readonly AuditRecorder _auditRecorder;
 
-        public PlatformAccountManager(IDatabaseAccessor databaseAccessor, UserContextService userContextService)
+        public PlatformAccountManager(IDatabaseAccessor databaseAccessor, UserContextService userContextService, AuditRecorder auditRecorder)
         {
             _databaseAccessor = databaseAccessor;
             _userContextService = userContextService;
+            _auditRecorder = auditRecorder;
         }
 
         [RequireAuthenticated]
@@ -106,7 +108,8 @@ namespace App.Api.Managers
             }
 
             PlatformAccount account;
-            if (request.Id.HasValue && request.Id.Value != Guid.Empty)
+            var isUpdate = request.Id.HasValue && request.Id.Value != Guid.Empty;
+            if (isUpdate)
             {
                 var existing = accounts.FirstOrDefault(item => item.Id == request.Id.Value);
                 if (existing == null)
@@ -136,6 +139,16 @@ namespace App.Api.Managers
                 accounts.Add(account);
             }
 
+            // 改前值用于审计 diff；新建账号时这些字段都是空串，diff 里显示「未填写」。
+            var before = new
+            {
+                account.Platform,
+                account.Handle,
+                account.DisplayName,
+                account.Status,
+                account.FollowerCount
+            };
+
             account.Platform = platform;
             account.Handle = handle;
             account.DisplayName = displayName;
@@ -144,6 +157,25 @@ namespace App.Api.Managers
             account.UpdatedAt = DateTimeOffset.UtcNow;
 
             await _databaseAccessor.UpsertDocument(account);
+
+            await _auditRecorder.RecordAsync(
+                AuditAction.AccountSave,
+                AuditTargetType.Account,
+                account.Id,
+                $"{platform} / {handle}",
+                isUpdate
+                    ? $"编辑账号「{displayName}」（{platform} / {handle}）。"
+                    : $"新增账号「{displayName}」（{platform} / {handle}）。",
+                new[]
+                {
+                    AuditText.NewChange("Platform", "平台", AuditText.Text(before.Platform), AuditText.Text(platform)),
+                    AuditText.NewChange("Handle", "账号标识", AuditText.Text(before.Handle), AuditText.Text(handle)),
+                    AuditText.NewChange("DisplayName", "展示名", AuditText.Text(before.DisplayName), AuditText.Text(displayName)),
+                    AuditText.NewChange("Status", "接入状态",
+                        AuditText.AccountStatus(before.Status), AuditText.AccountStatus(status)),
+                    AuditText.NewChange("FollowerCount", "粉丝数",
+                        AuditText.Number(before.FollowerCount), AuditText.Number(request.FollowerCount))
+                });
 
             var metrics = (await _databaseAccessor
                 .GetDocumentsByProperty<MetricDaily>(metric => metric.AccountId == account.Id)).ToList();
@@ -180,9 +212,22 @@ namespace App.Api.Managers
                 return new OperationResultDto { Success = true, Message = "账号已处于停用状态。" };
             }
 
+            var previousStatus = account.Status;
             account.Status = PlatformAccountStatus.Paused;
             account.UpdatedAt = DateTimeOffset.UtcNow;
             await _databaseAccessor.UpsertDocument(account);
+
+            await _auditRecorder.RecordAsync(
+                AuditAction.AccountDisable,
+                AuditTargetType.Account,
+                account.Id,
+                $"{account.Platform} / {account.Handle}",
+                $"停用账号「{account.DisplayName}」，历史日记录保留。",
+                new[]
+                {
+                    AuditText.NewChange("Status", "接入状态",
+                        AuditText.AccountStatus(previousStatus), AuditText.AccountStatus(PlatformAccountStatus.Paused))
+                });
 
             return new OperationResultDto { Success = true, Message = $"已停用「{account.DisplayName}」，历史记录保留。" };
         }
