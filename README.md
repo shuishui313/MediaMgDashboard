@@ -8,12 +8,15 @@ MediaAI 面向个人自媒体矩阵的日常运营：把多个平台账号的播
 
 **中文** | [English](README.en.md)
 
+[文档](#文档) · [当前状态](#当前状态) · [已知限制](#已知限制) · [技术栈](#技术栈) · [目录结构](#目录结构) · [快速开始](#快速开始) · [环境变量与配置](#环境变量与配置) · [架构说明](#架构说明) · [角色与权限](#角色与权限) · [前端路由](#前端路由) · [设计系统与-ui-规范](#设计系统与-ui-规范) · [安全与保密信息处理](#安全与保密信息处理) · [部署](#部署) · [下一步计划](#下一步计划)
+
 ---
 
 ## 目录
 
 - [文档](#文档)
 - [当前状态](#当前状态)
+- [已知限制](#已知限制)
 - [技术栈](#技术栈)
 - [目录结构](#目录结构)
 - [快速开始](#快速开始)
@@ -68,6 +71,16 @@ MediaAI 面向个人自媒体矩阵的日常运营：把多个平台账号的播
 
 ---
 
+## 已知限制
+
+下面只复述本文已经写过的边界。仓库里还没有对应的 Issue，这里不编造编号。怎么对待这几条，见 [docs/decisions.md](docs/decisions.md)。
+
+- **主链路已跑通，这几项还没接。** 登录与角色权限、平台账号与日指标（含 CSV）、机会 / 风险实时判定、商务单与内容计划、执行列表与跨角色待办、操作审计，数据由后端接口返回，首页不再有 mock 常量。开发态数据存本地 JSON。尚未接入：飞书免登、飞书审批、平台 API 自动同步、`/connections/:platform` 详情页。
+- **不要把「前端原型 / 页面仍是 mock」写回去。** 这句开篇已经删掉，因为它和状态表矛盾。还留在「当前状态」下面的是：接口不可用时 KPI 与信号显式降级为「静态示例数据」；执行列表三个 Tab 与管理层概览仍记为 `ExampleView.tsx` 的演示数据。
+- **Pages 需要开启。** 仓库已于 2026-11-03 迁到 `shuishui313/MediaMgDashboard`。Pages 需要在新仓库 Settings → Pages 开启一次：Source `Deploy from a branch`、Branch `main`、目录 `/docs`，之后访问 https://shuishui313.github.io/MediaMgDashboard/ 。「当前状态」里产品文档一行写的是「已发布（仓库迁移后需重新开启 Pages）」。
+
+---
+
 ## 技术栈
 
 - **前端**：React 18 + TypeScript + Vite + Tailwind CSS v4 + ShadCN UI（`radix-ui`）
@@ -82,7 +95,7 @@ MediaAI 面向个人自媒体矩阵的日常运营：把多个平台账号的播
 ## 目录结构
 
 ```text
-mediaai/
+MediaMgDashboard/
 ├── react-app/                     # 前端
 │   ├── src/
 │   │   ├── api/                   # ApiClient + DTO + AuthManager 封装
@@ -103,6 +116,8 @@ mediaai/
 ├── docs/                          # 产品文档、实施方案与 RPC 说明
 └── .gitea/workflows/deploy.yml    # 部署流水线
 ```
+
+根目录写成仓库名 `MediaMgDashboard`（旧仓库 `gsspai/mediaai` 已停用）。文末有同一棵树的对照表。
 
 ---
 
@@ -505,3 +520,36 @@ git status --ignored --short | grep -E "\.env|appsettings"
 - 页面不出现硬编码主题色，暗色模式下无不可读文本。
 
 完整验收清单（M3 逐条勾选）见[产品文档 · 验收标准](https://shuishui313.github.io/MediaMgDashboard/)。
+
+---
+
+<details>
+<summary>目录一览</summary>
+
+把上文「目录结构」那棵树摊成表。根名 `MediaMgDashboard` 是迁库后的仓库名。最后几行是说明文件，树里没有展开。
+
+| 路径 | 说明 |
+| --- | --- |
+| `react-app/` | 前端 |
+| `react-app/src/api/` | ApiClient + DTO + AuthManager 封装 |
+| `react-app/src/auth/` | AuthStore（token / session 持久化） |
+| `react-app/src/components/dashboard/` | 统一展示组件（面板、标题、状态、趋势图、分段切换） |
+| `react-app/src/components/ui/` | ShadCN 基础组件 |
+| `react-app/src/lib/` | `cn()`、数字格式化 |
+| `react-app/src/routes/` | 路由表与 ProtectedRoute |
+| `react-app/src/views/` | 页面视图 |
+| `react-app/src/default.css` | 设计 token（颜色 / 圆角 / 阴影） |
+| `react-app/.env.example` | 环境变量模板（不含真实值） |
+| `Services/` | 后端 |
+| `Services/App.Api/` | 启动、Manager、Engine、Accessor |
+| `Services/App.ServiceInvoker/` | RPC 路由、反射调用、鉴权 |
+| `Services/Contracts.Dto/` | 请求 / 响应 DTO |
+| `Services/Contracts.Domain/` | 领域实体与契约 |
+| `docs/` | 产品文档、实施方案与 RPC 说明 |
+| `.gitea/workflows/deploy.yml` | 部署流水线 |
+| `README.md`、`README.en.md` | 中英双文件。文首保留语言切换，改一处同时改另一处 |
+| `AGENTS.md` | 代理约定：角色两处同步、不提交密钥、不改 ServiceInvoker |
+| `docs/decisions.md`、`docs/declined.md` | 已采纳的决定，以及明确不做的事 |
+| `.github/PULL_REQUEST_TEMPLATE.md` | 拉取请求三栏模板 |
+
+</details>

@@ -1,0 +1,69 @@
+# AGENTS.md
+
+在本仓库改代码或文档时遵守下面的约定。每条先写中文，后面是 English。
+Rules for this repository. Chinese first, then English.
+
+本文件只约束 `shuishui313/MediaMgDashboard`。ruflo 不是本仓库里的项目：不要添加、嵌套、配置或修改它。见 [docs/declined.md](docs/declined.md)。
+This file applies only to `shuishui313/MediaMgDashboard`. ruflo is not this project: do not add, nest, configure, or edit it.
+
+## 文档 / Docs
+
+- 说明是两份文件：`README.md`（中文）和 `README.en.md`（English）。改其中一份时，另一份的对应段落一起改。文首的语言切换保持原样：中文页是 `**中文** | [English](README.en.md)`，英文页是 `[中文](README.md) | **English**`。
+  Two READMEs. A change to one updates the matching part of the other. Keep those switchers.
+- 英文 README 链到只有中文的深文档时，在链接旁写 `(in Chinese)`。目前包括产品文档站（`docs/product-overview.html` / `docs/index.html`）和 `docs/implementation-plan.md`。`docs/service-invoker-auth-flow.md` 与 `docs/service-invoker-streaming.md` 是英文，不加这句。
+  Mark links to Chinese-only deep docs with `(in Chinese)`. The two ServiceInvoker notes are English and do not get the marker.
+- 已采纳的决定写在 [docs/decisions.md](docs/decisions.md)，明确不做的写在 [docs/declined.md](docs/declined.md)。
+  Accepted decisions and declined work live in those two files.
+- 完成度按 README 现在的写法。开篇是「主链路已跑通」，并点名尚未接入的飞书免登、飞书审批、平台 API 自动同步、`/connections/:platform`。不要把已经删掉的「前端原型阶段 / 页面数据仍为前端 mock / 后端仅认证骨架」写回去。「当前状态」下面那句「静态示例数据」和 `ExampleView.tsx` 演示数据仍留在原文里。没有对应 Issue，不要编造编号。
+  Status follows the README as it stands: the opening says the main path is wired and names what is still open. Do not restore the deleted “frontend prototype / page data is still mock / auth skeleton only” sentence. Leave the “static sample data” and `ExampleView.tsx` note under Current status. Do not invent issue numbers.
+
+## 角色常量 / Roles
+
+- `Services/App.Api/Utilities/Roles/Roles.cs` 与 `react-app/src/utils/roles.ts` 必须一起改。README 里的短路径是 `src/utils/roles.ts`。
+  A change in one file must land in the other.
+
+## RPC / Manager
+
+- 新增业务能力：在 `Contracts.Dto` 定义 DTO → 在 `App.Api/Managers` 新增 Manager 方法，并标 `[RequireAuthenticated]` / `[RequireRole]` → 在 `react-app/src/api` 增加薄封装。
+  That is how a capability is added.
+- **不要修改 ServiceInvoker**（`Services/App.ServiceInvoker`）。鉴权、刷新、调用顺序由它统一协调。
+  Do not edit ServiceInvoker.
+- 新增指标入口必须写入 `MetricDaily.Source` 与 `RecordedBy`，否则数字无法回溯。`Source` 取 `api` / `manual` / `csv` / `seed`。
+  New metric ingest must set `Source` and `RecordedBy`.
+
+## 密钥 / Secrets
+
+- 真实密钥不入库。`react-app/.env`、`react-app/.env.local`、`Services/App.Api/appsettings.Development.json`、`appsettings.*.local.json` 已在 `.gitignore`。`appsettings.json` 只留占位值。
+  Do not commit secrets. Those paths are gitignored. `appsettings.json` keeps placeholders.
+- `AccessToken` / `RefreshToken` 只走请求体和响应 envelope，不写日志、不进 UI、不进错误提示、不进截图和文档。`SupabaseSecretKey` 与全部 `Feishu__*` 只留在服务端，不下发浏览器。
+  Tokens stay in the body and the envelope. Server keys, including every `Feishu__*` setting, stay on the server.
+- 文档和截图里的密钥写成 `sk_****`、`eyJ****` 或 `<masked>`。误提交后先在 Supabase / 数据库侧轮换密钥，再清理 Git 历史。只删提交、不轮换，等于没做。
+  Redact. If a secret is committed, rotate it first, then scrub history.
+- 提交前自检：
+  Check before committing:
+
+```bash
+git grep -nE "eyJ[A-Za-z0-9_-]{20,}|sk_[A-Za-z0-9]{10,}|postgres(ql)?://[^\"' ]+@"
+git status --ignored --short | grep -E "\.env|appsettings"
+```
+
+## 界面 / UI
+
+来自 README「设计系统与 UI 规范」。
+From the design-system section of the README.
+
+- 新页面复用 `react-app/src/components/dashboard/` 里的 `PageShell`、`Panel`、`SectionHeader`、`StatusPill`、`SegmentedTabs`、`TrendChart`，不要另写一套卡片。
+  Reuse those components.
+- 只用语义色：`bg-background`、`bg-card`、`text-foreground`、`text-muted-foreground`、`border-border`、`text-success`。不要写 `#101114`、`bg-white/90`、`rgba(...)`。
+  Semantic colors only. Hard-coded theme colors break dark mode.
+- 数字用 `formatCompactNumber()`（`万` / `千`），不要在同一页混用 `k`、`w`、`万`。区块标题用 `SectionHeader`（`h2`），页面主标题用 `h1`。
+  Use `formatCompactNumber()`. Section titles use `SectionHeader`.
+- 新的异步区域同时给出 loading（骨架）、empty、error。可点击区域用 `Link` / `Button`。图表带 `role="img"` 与 `aria-label`。
+  A new async region has loading, empty, and error. Charts expose a name.
+
+## 仓库操作 / Repo operations
+
+- 持续集成的正文在 `docs/ci-workflow.yml`。README 写明：IDE 的 OAuth 凭据没有 `workflow` 权限，需要在 GitHub 网页端把它复制为 `.github/workflows/ci.yml` 才会自动跑。不要为了启用 CI 去改应用代码。
+  The workflow body stays in `docs/ci-workflow.yml` until someone copies it to `.github/workflows/ci.yml` in the GitHub UI. Do not refactor the app to work around that.
+- 产品文档站是 `docs/` 下的静态文件，由 GitHub Pages 从 `main` 的 `/docs` 发布。迁库之后 Pages 需要在新仓库里开启一次。
+  Pages serves `/docs` on `main` and must be enabled once on the new repository.

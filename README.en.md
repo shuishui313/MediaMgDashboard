@@ -2,11 +2,13 @@
 
 MediaMgDashboard (formerly MediaAI) is the daily ops workbench for a personal media matrix. Playback and engagement across platform accounts, breakout opportunities, and throttling risk sit on the same screen as commercial deals and the content calendar — read the situation, judge opportunity and risk, then land on who does what, and at which step.
 
-Positioning, roles, metric definitions, and screen structure are specified in the [product docs](https://shuishui313.github.io/MediaMgDashboard/).
+Positioning, roles, metric definitions, and screen structure are specified in the [product docs](https://shuishui313.github.io/MediaMgDashboard/) (in Chinese).
 
 The main path is wired end to end: login and role permissions, platform accounts and daily metrics (including CSV import), live opportunity / risk detection, deals and content plans, execution lists and cross-role todos, and the audit log. All data comes from backend APIs; the home page no longer keeps mock constants. Development data lives in local JSON. Feishu SSO, Feishu approval callbacks, automated platform API sync, and the `/connections/:platform` detail page are still open.
 
 [中文](README.md) | **English**
+
+[Documentation](#documentation) · [Current status](#current-status) · [Known limits](#known-limits) · [Tech stack](#tech-stack) · [Directory structure](#directory-structure) · [Quick start](#quick-start) · [Environment variables and configuration](#environment-variables-and-configuration) · [Architecture](#architecture) · [Roles and permissions](#roles-and-permissions) · [Frontend routes](#frontend-routes) · [Design system and UI conventions](#design-system-and-ui-conventions) · [Security and secrets](#security-and-secrets) · [Deployment](#deployment) · [Next steps](#next-steps)
 
 ---
 
@@ -14,6 +16,7 @@ The main path is wired end to end: login and role permissions, platform accounts
 
 - [Documentation](#documentation)
 - [Current status](#current-status)
+- [Known limits](#known-limits)
 - [Tech stack](#tech-stack)
 - [Directory structure](#directory-structure)
 - [Quick start](#quick-start)
@@ -32,14 +35,14 @@ The main path is wired end to end: login and role permissions, platform accounts
 
 | Document | What it covers | Where |
 | --- | --- | --- |
-| Product docs | Positioning, roles, information architecture, screen structure, key flows, metric definitions, permissions, phases, acceptance | https://shuishui313.github.io/MediaMgDashboard/ |
-| Implementation plan | Data model, Manager API list, frontend changes, task breakdown | [docs/implementation-plan.md](docs/implementation-plan.md) |
+| Product docs | Positioning, roles, information architecture, screen structure, key flows, metric definitions, permissions, phases, acceptance | https://shuishui313.github.io/MediaMgDashboard/ (in Chinese) |
+| Implementation plan | Data model, Manager API list, frontend changes, task breakdown | [docs/implementation-plan.md](docs/implementation-plan.md) (in Chinese) |
 | Auth flow | JWT validation and role checks inside `ServiceInvoker` | [docs/service-invoker-auth-flow.md](docs/service-invoker-auth-flow.md) |
 | Streaming RPC | Transport and lifetime of streaming calls | [docs/service-invoker-streaming.md](docs/service-invoker-streaming.md) |
 
-The product doc is a single static page (`docs/product-overview.html`, entered from `docs/index.html`), with no build and no external dependencies. GitHub Pages publishes the `/docs` directory of the `main` branch.
+The product doc (in Chinese) is a single static page (`docs/product-overview.html`, entered from `docs/index.html`), with no build and no external dependencies. GitHub Pages publishes the `/docs` directory of the `main` branch.
 
-On 2026-11-03 the repository moved to **`shuishui313/MediaMgDashboard`** (the old `gsspai/mediaai` repo is retired). Pages must be turned on once in the **new** repository: Settings → Pages, Source `Deploy from a branch`, Branch `main`, folder `/docs`. After that, open https://shuishui313.github.io/MediaMgDashboard/ . A push to `main` republishes in about a minute, with no build step.
+On 2026-11-03 the repository moved to **`shuishui313/MediaMgDashboard`** (the old `gsspai/mediaai` repo is retired). Pages must be turned on once in the **new** repository: Settings → Pages, Source `Deploy from a branch`, Branch `main`, folder `/docs`. After that, open https://shuishui313.github.io/MediaMgDashboard/ (in Chinese). A push to `main` republishes in about a minute, with no build step.
 
 ---
 
@@ -54,7 +57,7 @@ On 2026-11-03 the repository moved to **`shuishui313/MediaMgDashboard`** (the ol
 | Signal → follow-up | Done | Opportunity / risk cards on the home page can create a todo in one click, deduped by `SourceKey`. Risks go to operations; opportunities go to planning |
 | Continuous integration | Config ready, not enabled | The workflow body is in `docs/ci-workflow.yml`. The IDE OAuth credential has no `workflow` scope, so copy it to `.github/workflows/ci.yml` in the GitHub UI before it runs on its own: backend build + 84 unit tests, frontend typecheck / 17 unit tests / lint / production build |
 | Shared design system | Done | `PageShell` / `Panel` / `SectionHeader` / `StatusPill` / `TrendChart` / `SegmentedTabs` |
-| Product docs | Published (re-enable Pages after the repo move) | Target [shuishui313.github.io/MediaMgDashboard](https://shuishui313.github.io/MediaMgDashboard/), covering positioning, roles, metric definitions, and acceptance criteria |
+| Product docs | Published (re-enable Pages after the repo move) | Target [shuishui313.github.io/MediaMgDashboard](https://shuishui313.github.io/MediaMgDashboard/) (in Chinese), covering positioning, roles, metric definitions, and acceptance criteria |
 | Platform connections (`/connections`) | Done (manual + CSV) | Account CRUD, disable, manual daily metrics, CSV bulk import, and recent entries. `/connections/:platform` is still a placeholder. OAuth is not wired |
 | Deals and plans | Done (no approval flow) | `/business`, `/business/:dealId`, `/plans`, and `/plans/:planId` use live data. Quote approval is still moved by hand. Feishu approval is not wired |
 | Detail pages | Partial | `/connections/:platform` is still a placeholder. `/settings` implements threshold configuration. `/analysis/:viewId` has been removed |
@@ -65,6 +68,16 @@ On 2026-11-03 the repository moved to **`shuishui313/MediaMgDashboard`** (the ol
 | Dark mode | Partial | Tokens are ready. There is no theme toggle on the pages yet |
 
 > Home KPI cards, the platform trend, breakout opportunities, and throttling risks all come from the API. Every card and every signal carries a source label (API sync / manual entry / CSV import / development seed). The three Execution list tabs (deals, plans, todos) and the management overview are still demo data in `react-app/src/views/ExampleView.tsx`. When the API is unavailable, the KPI and signal blocks degrade explicitly to “static sample data”.
+
+---
+
+## Known limits
+
+These bullets only repeat limits this README already states. The repository has no Issues for them, so this list does not invent issue numbers. How to treat the gap is in [docs/decisions.md](docs/decisions.md).
+
+- **The main path is wired. These are not.** Login and role permissions, platform accounts and daily metrics (including CSV), live opportunity / risk detection, deals and content plans, execution lists and cross-role todos, and the audit log come from backend APIs. The home page no longer keeps mock constants. Development data lives in local JSON. Still open: Feishu SSO, Feishu approval, automated platform API sync, and the `/connections/:platform` detail page.
+- **Do not put “frontend prototype / page data is still mock” back.** That opening was removed because it contradicted the status table. What remains under Current status: when the API is unavailable, KPI and signal blocks degrade to “static sample data”, and the three execution tabs plus the management overview are still described as demo data in `ExampleView.tsx`.
+- **Pages must be enabled.** On 2026-11-03 the repository moved to `shuishui313/MediaMgDashboard`. Pages must be turned on once in the new repository: Settings → Pages, Source `Deploy from a branch`, Branch `main`, folder `/docs`. After that, open https://shuishui313.github.io/MediaMgDashboard/ (in Chinese). The status table calls the product docs “Published (re-enable Pages after the repo move)”.
 
 ---
 
@@ -82,7 +95,7 @@ On 2026-11-03 the repository moved to **`shuishui313/MediaMgDashboard`** (the ol
 ## Directory structure
 
 ```text
-mediaai/
+MediaMgDashboard/
 ├── react-app/                     # Frontend
 │   ├── src/
 │   │   ├── api/                   # ApiClient + DTOs + AuthManager wrappers
@@ -103,6 +116,8 @@ mediaai/
 ├── docs/                          # Product docs, implementation plan, RPC notes
 └── .gitea/workflows/deploy.yml    # Deploy pipeline
 ```
+
+The tree root is the repository name `MediaMgDashboard` (the old `gsspai/mediaai` repository is retired). A table of the same tree is at the end of this file.
 
 ---
 
@@ -354,7 +369,7 @@ Thresholds live in `SignalThresholdConfig` (a singleton document with a fixed id
 
 ## Roles and permissions
 
-Display names, default views, and the [product docs · Users and roles](https://shuishui313.github.io/MediaMgDashboard/) use the same column:
+Display names, default views, and the [product docs · Users and roles](https://shuishui313.github.io/MediaMgDashboard/) (in Chinese) use the same column:
 
 | Role id | Display name | Default view |
 | --- | --- | --- |
@@ -469,7 +484,7 @@ Pages charges for private repositories. This repository is public, so Pages can 
 
 ## Next steps
 
-> Positioning, roles, and metric definitions are in the [product docs](https://shuishui313.github.io/MediaMgDashboard/). The full breakdown (M0–M4), data-model fields, Manager API list, and acceptance criteria are in [docs/implementation-plan.md](docs/implementation-plan.md).
+> Positioning, roles, and metric definitions are in the [product docs](https://shuishui313.github.io/MediaMgDashboard/) (in Chinese). The full breakdown (M0–M4), data-model fields, Manager API list, and acceptance criteria are in [docs/implementation-plan.md](docs/implementation-plan.md) (in Chinese).
 
 ### P0 — A main path that has data and identity
 
@@ -499,4 +514,37 @@ Pages charges for private repositories. This repository is public, so Pages can 
 - After a deal finishes Feishu approval, the list stage updates on its own. An illegal transition is rejected.
 - Pages do not hard-code theme colors. Dark mode has no unreadable text.
 
-The full checklist (M3, item by item) is in the [product docs · Acceptance criteria](https://shuishui313.github.io/MediaMgDashboard/).
+The full checklist (M3, item by item) is in the [product docs · Acceptance criteria](https://shuishui313.github.io/MediaMgDashboard/) (in Chinese).
+
+---
+
+<details>
+<summary>Directory overview</summary>
+
+The table is the directory tree above, with the repository name `MediaMgDashboard` as the root (the retired `mediaai` repo name is no longer the label). The last rows are docs files the tree does not expand.
+
+| Path | What it is |
+| --- | --- |
+| `react-app/` | Frontend |
+| `react-app/src/api/` | ApiClient + DTOs + AuthManager wrappers |
+| `react-app/src/auth/` | AuthStore (token / session persistence) |
+| `react-app/src/components/dashboard/` | Shared display components (panel, header, status, trend, segmented control) |
+| `react-app/src/components/ui/` | ShadCN primitives |
+| `react-app/src/lib/` | `cn()`, number formatting |
+| `react-app/src/routes/` | Route table and ProtectedRoute |
+| `react-app/src/views/` | Page views |
+| `react-app/src/default.css` | Design tokens (color / radius / shadow) |
+| `react-app/.env.example` | Env template (no real values) |
+| `Services/` | Backend |
+| `Services/App.Api/` | Host, Managers, Engines, Accessors |
+| `Services/App.ServiceInvoker/` | RPC routing, reflection invoke, auth |
+| `Services/Contracts.Dto/` | Request / response DTOs |
+| `Services/Contracts.Domain/` | Domain entities and contracts |
+| `docs/` | Product docs, implementation plan, RPC notes |
+| `.gitea/workflows/deploy.yml` | Deploy pipeline |
+| `README.md`, `README.en.md` | Chinese and English READMEs. Keep the language switchers; update both |
+| `AGENTS.md` | Agent rules: keep role files in sync, do not commit secrets, do not edit ServiceInvoker |
+| `docs/decisions.md`, `docs/declined.md` | Accepted decisions, and work this repo will not take |
+| `.github/PULL_REQUEST_TEMPLATE.md` | Three-column pull request template |
+
+</details>
