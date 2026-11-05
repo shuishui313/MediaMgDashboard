@@ -23,12 +23,12 @@ Accepted decisions that the README or git history already records. No new untest
 
 ## 数据：mock 与真实接口分开说 / Mock versus live data
 
-- **状态 / Status：** 按 README 在 `173ec7d` 之后的写法。Follow the README after `173ec7d`.
+- **状态 / Status：** 按 2026-11-05 两次合并后的 README 写法。Follow the README after both 2026-11-05 merges.
 - 开篇曾经写「前端原型阶段 / 页面数据仍为前端 mock / 后端仅保留认证骨架」。这句和状态表矛盾，已在 2026-11-05 删掉。不要写回去。
   The opening used to say “frontend prototype / page data is still mock / the backend only has an auth skeleton”. That contradicted the status table and was removed on 2026-11-05. Do not put it back.
-- 现在的开篇：主链路已跑通（登录与角色权限、平台账号与日指标含 CSV、机会 / 风险实时判定、商务单与内容计划、执行列表与跨角色待办、操作审计）。数据由后端接口返回，首页不再有 mock 常量。开发态数据存本地 JSON。
-  The opening now says the main path is wired: login and roles, platform accounts and daily metrics including CSV, live opportunity / risk detection, deals and content plans, execution lists and cross-role todos, and the audit log. Data comes from backend APIs. The home page no longer keeps mock constants. Development data lives in local JSON.
+- 现在的开篇：主链路已跑通（登录与角色权限、平台账号与日指标含 CSV、机会 / 风险实时判定、商务单与内容计划、执行列表与跨角色待办、操作审计）。数据由后端接口返回；首页仍保留只在 `GetSummary` 整个失败时才出现的「静态示例数据」兜底卡片，执行列表与管理层概览没有 mock 兜底。开发态数据存本地 JSON。
+  The opening now says the main path is wired: login and roles, platform accounts and daily metrics including CSV, live opportunity / risk detection, deals and content plans, execution lists and cross-role todos, and the audit log. Data comes from backend APIs. The home page still keeps labelled “static sample data” fallback cards that appear only when `GetSummary` fails entirely; the execution lists and management overview have no mock fallback. Development data lives in local JSON.
 - 同一段点名尚未接入：飞书免登、飞书审批、平台 API 自动同步、`/connections/:platform` 详情页。
   The same paragraph names what is still open: Feishu SSO, Feishu approval, automated platform API sync, and the `/connections/:platform` detail page.
-- 「当前状态」下面仍有一句：接口不可用时 KPI 与信号显式降级为「静态示例数据」；执行列表三个 Tab 与管理层概览仍是 `ExampleView.tsx` 的演示数据。这句留着，不在这份文档改动里删掉，也不把它升格成「整个仓库仍是 mock」。
-  Under Current status, one note remains: when the API is unavailable, KPI and signal blocks degrade to “static sample data”, and the three execution tabs plus the management overview are still demo data in `ExampleView.tsx`. Leave that note. Do not delete it in this docs change, and do not promote it into “the whole repo is still mock”.
+- 「当前状态」下面把两类行为分开写：接口完全不可用时 KPI 与信号降级为带「静态示例数据」标记的兜底卡片；执行列表三个 Tab 与管理层概览来自 `DashboardManager.GetSummary().Execution`，没有演示数据，失败时显示空态文案。不要把这两类混成「整个仓库仍是 mock」，也不要声称首页完全没有兜底常量。
+  Under Current status, keep two cases apart: when the API fails entirely, KPI and signal blocks degrade to labelled “static sample data” fallback cards; the three execution tabs and the management overview read `DashboardManager.GetSummary().Execution`, have no demo data, and show empty states on failure. Do not collapse the two into “the whole repo is still mock”, and do not claim the home page has no fallback constants.

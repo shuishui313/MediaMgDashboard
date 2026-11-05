@@ -14,8 +14,8 @@ This file applies only to `shuishui313/MediaMgDashboard`. ruflo is not this proj
   Mark links to Chinese-only deep docs with `(in Chinese)`. The two ServiceInvoker notes are English and do not get the marker.
 - 已采纳的决定写在 [docs/decisions.md](docs/decisions.md)，明确不做的写在 [docs/declined.md](docs/declined.md)。
   Accepted decisions and declined work live in those two files.
-- 完成度按 README 现在的写法。开篇是「主链路已跑通」，并点名尚未接入的飞书免登、飞书审批、平台 API 自动同步、`/connections/:platform`。不要把已经删掉的「前端原型阶段 / 页面数据仍为前端 mock / 后端仅认证骨架」写回去。「当前状态」下面那句「静态示例数据」和 `ExampleView.tsx` 演示数据仍留在原文里。没有对应 Issue，不要编造编号。
-  Status follows the README as it stands: the opening says the main path is wired and names what is still open. Do not restore the deleted “frontend prototype / page data is still mock / auth skeleton only” sentence. Leave the “static sample data” and `ExampleView.tsx` note under Current status. Do not invent issue numbers.
+- 完成度按 README 现在的写法。开篇是「主链路已跑通」，并点名尚未接入的飞书免登、飞书审批、平台 API 自动同步、`/connections/:platform`。不要把已经删掉的「前端原型阶段 / 页面数据仍为前端 mock / 后端仅认证骨架」写回去。「当前状态」下面要分清两类：KPI / 信号仅在 `GetSummary` 整个失败时降级为带「静态示例数据」标记的兜底卡片；执行列表三个 Tab 与管理层概览来自 `GetSummary().Execution`，没有演示数据、失败时显示空态。没有对应 Issue，不要编造编号。
+  Status follows the README as it stands: the opening says the main path is wired and names what is still open. Do not restore the deleted “frontend prototype / page data is still mock / auth skeleton only” sentence. Under Current status keep two cases distinct: KPI / signal blocks fall back to labelled “static sample data” only when `GetSummary` fails entirely, while the three execution tabs and the management overview read `GetSummary().Execution`, have no demo data, and show empty states on failure. Do not invent issue numbers.
 
 ## 角色常量 / Roles
 

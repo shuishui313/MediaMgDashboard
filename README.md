@@ -4,7 +4,7 @@ MediaAI 面向个人自媒体矩阵的日常运营：把多个平台账号的播
 
 定位、角色、指标口径与界面结构的完整说明见[产品文档](https://shuishui313.github.io/MediaMgDashboard/)。
 
-主链路已跑通：登录与角色权限、平台账号与日指标录入（含 CSV 导入）、机会 / 风险实时判定、商务单与内容计划、执行列表与跨角色待办、操作审计，数据均由后端接口返回，首页不再有 mock 常量。开发态数据存本地 JSON；飞书免登、飞书审批、平台 API 自动同步与 `/connections/:platform` 详情页尚未接入。
+主链路已跑通：登录与角色权限、平台账号与日指标录入（含 CSV 导入）、机会 / 风险实时判定、商务单与内容计划、执行列表与跨角色待办、操作审计，数据均由后端接口返回。首页仅在 `GetSummary` 整个失败时显示带「静态示例数据」标记的兜底卡片；执行列表与管理层概览没有 mock 兜底，失败时显示空态。开发态数据存本地 JSON；飞书免登、飞书审批、平台 API 自动同步与 `/connections/:platform` 详情页尚未接入。
 
 **中文** | [English](README.en.md)
 
@@ -67,7 +67,7 @@ MediaAI 面向个人自媒体矩阵的日常运营：把多个平台账号的播
 | 登录 | 可用 | `/login` 账号密码登录，成功后回到来源路径；飞书免登未接入 |
 | 暗色模式 | 部分 | Token 已就绪，但页面尚无主题切换入口 |
 
-> 首页 KPI 卡、平台走势、爆款机会与限流风险均由接口返回，每张卡与每条信号都带来源说明（接口同步 / 手工录入 / CSV 导入 / 开发态种子）。「执行列表」三个 Tab（商务、计划、待办）与「管理层概览」仍是 `react-app/src/views/ExampleView.tsx` 中的演示数据，接口不可用时 KPI 与信号区块会显式降级为「静态示例数据」。
+> 首页 KPI 卡、平台走势、爆款机会与限流风险均由接口返回，每张卡与每条信号都带来源说明（接口同步 / 手工录入 / CSV 导入 / 开发态种子）。「执行列表」三个 Tab（商务、计划、待办）与「管理层概览」同样来自 `DashboardManager.GetSummary().Execution`，无 mock 兜底，接口失败时显示空态文案。只有 `GetSummary` 整个失败时，KPI 与信号区块才降级为带「静态示例数据」标记的兜底卡片。
 
 ---
 
@@ -75,8 +75,8 @@ MediaAI 面向个人自媒体矩阵的日常运营：把多个平台账号的播
 
 下面只复述本文已经写过的边界。仓库里还没有对应的 Issue，这里不编造编号。怎么对待这几条，见 [docs/decisions.md](docs/decisions.md)。
 
-- **主链路已跑通，这几项还没接。** 登录与角色权限、平台账号与日指标（含 CSV）、机会 / 风险实时判定、商务单与内容计划、执行列表与跨角色待办、操作审计，数据由后端接口返回，首页不再有 mock 常量。开发态数据存本地 JSON。尚未接入：飞书免登、飞书审批、平台 API 自动同步、`/connections/:platform` 详情页。
-- **不要把「前端原型 / 页面仍是 mock」写回去。** 这句开篇已经删掉，因为它和状态表矛盾。还留在「当前状态」下面的是：接口不可用时 KPI 与信号显式降级为「静态示例数据」；执行列表三个 Tab 与管理层概览仍记为 `ExampleView.tsx` 的演示数据。
+- **主链路已跑通，这几项还没接。** 登录与角色权限、平台账号与日指标（含 CSV）、机会 / 风险实时判定、商务单与内容计划、执行列表与跨角色待办、操作审计，数据由后端接口返回；执行列表与管理层概览没有 mock 兜底。开发态数据存本地 JSON。尚未接入：飞书免登、飞书审批、平台 API 自动同步、`/connections/:platform` 详情页。
+- **不要把「前端原型 / 页面仍是 mock」写回去。** 这句开篇已经删掉，因为它和状态表矛盾。「当前状态」下面要分清两类：接口完全不可用时 KPI 与信号显式降级为带「静态示例数据」标记的兜底卡片；执行列表三个 Tab 与管理层概览已接 `GetSummary().Execution`，没有演示数据，失败时显示空态。
 - **Pages 需要开启。** 仓库已于 2026-11-03 迁到 `shuishui313/MediaMgDashboard`。Pages 需要在新仓库 Settings → Pages 开启一次：Source `Deploy from a branch`、Branch `main`、目录 `/docs`，之后访问 https://shuishui313.github.io/MediaMgDashboard/ 。「当前状态」里产品文档一行写的是「已发布（仓库迁移后需重新开启 Pages）」。
 
 ---
@@ -242,7 +242,7 @@ POST /api/stream   → NDJSON 流式返回（方法返回 IAsyncEnumerable<T>）
 
 - `MetricDaily.Source` 取 `api`（平台接口同步）/ `manual`（人工录入）/ `csv`（CSV 批量导入）/ `seed`（开发态种子），返回体里的 `DataSource` 会把四者计数摊开，界面直接显示「开发态示例数据 · 5 个账号 / 35 条日记录」「CSV 导入 12 条」这类文案。**新增数据入口时必须写入 `Source` 与 `RecordedBy`，否则数字无法回溯。**
 - 环比口径：把一个区间对半切成前段与后段，用**日均播放**比较（`DailyChangeRate`），而不是两段总量——7 天区间前 3 天后 4 天，用总量比会系统性低估后段。
-- 无数据时不报错：`HasData = false`，四个 KPI 返回 `"—"` 与 `Status = pending`，界面同时展示「静态示例数据」标记，避免把占位值当成真实数据。
+- 无数据时不报错：`HasData = false`，四个 KPI 返回 `"—"` 与 `Status = pending`，执行列表照常返回真实单据；只有 `GetSummary` 整个失败时，界面才显示带「静态示例数据」标记的兜底卡片与错误提示。
 
 开发态种子数据只在 `ASPNETCORE_ENVIRONMENT=Development` 且库中**没有任何** `MetricDaily` 时写入一次（`Utilities/DashboardSeeder.cs`）。想回到初始状态，删掉本地数据目录下的 `PlatformAccount.json` 与 `MetricDaily.json` 后重启后端。
 
@@ -492,7 +492,7 @@ git status --ignored --short | grep -E "\.env|appsettings"
 2. **角色口径对齐**
    - 新增 `RoleMappingConfig`（飞书用户组 → 角色）与 `SyncDirectory` 定时同步，离职自动置 `Disabled`；
    - ~~业务接口按权限矩阵挂 `[RequireRole(...)]`~~ — 已接入设置页与账号/指标写接口，其余接口随落地补齐。
-3. **后端数据骨架**：新增 `DashboardManager` + DTO（平台走势、KPI、机会/风险、待办、合作单摘要），工作台改为通过 `ApiClient` 拉取并删除 mock 常量。（`GetSummary` 已覆盖全部区块，首页不再有 mock 常量）
+3. **后端数据骨架**：新增 `DashboardManager` + DTO（平台走势、KPI、机会/风险、待办、合作单摘要），工作台改为通过 `ApiClient` 拉取。（`GetSummary` 已覆盖全部区块；执行列表与管理层概览已无 mock 常量，KPI / 走势 / 信号仍保留接口失败时带「静态示例数据」标记的兜底卡片）
    - 机会/风险阈值已可配：`/settings` 改完保存即生效，规则文案与首页同源（`SignalPolicyText`）。
    - ~~执行列表（商务 / 计划 / 待办）与管理层概览~~ — 已接 `DealManager` / `ContentPlanManager` / `TodoManager`（见「执行列表」一节）。
    - ~~机会 / 风险只展示不跟进~~ — 已支持一键转待办（见「信号转跟进待办」）。

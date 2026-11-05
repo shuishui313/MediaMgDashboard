@@ -23,6 +23,7 @@
 - 操作审计已落地：11 类写操作落 `AuditLog`（字段级前后值），`/settings` 底部可筛选、按天分组、展开看 diff；只保留 90 天，查询时自动清理。仅管理员可读。
 
 - CI 工作流已写好但**尚未启用**：内容在 `docs/ci-workflow.yml`，待在 GitHub 网页端复制为 `.github/workflows/ci.yml`（见 2.14 的推送限制说明）。
+- 远端 `ce0cfde` 带来的 `AGENTS.md` / `docs/decisions.md` / `docs/declined.md` 已合并；这三份文档把「执行列表仍是演示数据」「首页没有 mock 常量」写成了既定事实，与代码不符，已连同中英文 README 一起按实际行为修正。
 - 首页机会 / 风险信号可一键生成待办（风险给运营、机会给策划），`SourceKey` 保证同一条信号不重复建单。
 - 中英文 README 双文件维护（`README.md` / `README.en.md`），改状态口径时两份要同步；合并远端 `dd8196f` 时是 fast-forward，无 Git 冲突，但两个文件开头的「前端原型阶段」描述与状态表矛盾，已统一改为「主链路已跑通、飞书与平台同步未接」。
 
@@ -36,7 +37,9 @@
 
 | 版本 | 时间 | 内容 |
 | --- | --- | --- |
-| （待提交） | 2026-11-05 | 合并远端双语 README（`dd8196f`），修掉中英文开头「前端原型 / 数据仍是 mock」的过时描述，同步 lint 说明 |
+| （待提交） | 2026-11-05 | 合并远端 `ce0cfde`（UX 三件套 / AGENTS / decisions），修正「执行列表仍是演示数据」「首页没有 mock 常量」等与代码矛盾的描述，中英同步 |
+| `ce0cfde` | 2026-11-05 | 远端提交：新增 `AGENTS.md`、`docs/decisions.md`、`docs/declined.md`、PR 模板与 README「已知限制」章节 |
+| `173ec7d` | 2026-11-05 | 合并远端双语 README（`dd8196f`），修掉中英文开头「前端原型 / 数据仍是 mock」的过时描述，同步 lint 说明 |
 | `dd8196f` | 2026-11-05 | 远端提交：新增 `README.en.md` + 中文 README 语言切换链接 |
 | `149abc5` | 2026-11-04 | CI 模板、84 条后端单测、lint 存量清零、首页信号一键转待办（按 `SourceKey` 幂等） |
 | `3a1ab2b` | 2026-11-03 | 操作审计（`AuditLog` + `AuditRecorder` + 设置页面板）；仓库迁到 `shuishui313/MediaMgDashboard` |
@@ -332,7 +335,7 @@
 | 2 | ~~业务角色已定义，但没有任何接口挂 `[RequireRole(...)]`~~ | 阈值与账号 / 指标写接口已按权限矩阵收口（见 2.11）；后续新 Manager 记得同步标注 | ✅ |
 | 2b | 本地认证下角色的唯一入口是 `AppConfiguration__AdminEmails` | 只能给 `admin`；`sales` / `planner` 等角色需手改 `Users.json`，等 `RoleMappingConfig` 落地 | 待做（随飞书同步） |
 | 3 | 飞书免登未接入 | `/auth/feishu/callback` 与 `FeishuManager` 不存在，登录页只支持账号密码 | 待做（P0） |
-| 4 | ~~首页执行列表与管理层概览仍是前端常量~~ | 已全部接接口，首页不再有 mock 常量（见 2.12） | ✅ |
+| 4 | ~~首页执行列表与管理层概览仍是前端常量~~ | 已全部接接口，这两块不再有 mock 常量（见 2.12）；KPI / 走势 / 机会 / 风险仍保留接口失败时的静态兜底卡片 | ✅ |
 | 4b | 指标来源为手工录入 + CSV 导入，平台 API 同步未接 | 已能用表格灌数，但仍需人导出再上传；`Source = api` 尚无写入方 | 待做（M1-4） |
 | 4c | 商务单阶段推进靠人点，飞书报价审批未接 | 报价复核有记录但没有审批留痕；`DealManager.UpdateDealStage` 已留好入口给回调 | 待做（M2-1） |
 | 4d | 内容计划与待办没有删除 / 批量导入 | 录错了只能改状态（归档 / 完成），不能物理删除 | 待定 |

@@ -4,7 +4,7 @@ MediaMgDashboard (formerly MediaAI) is the daily ops workbench for a personal me
 
 Positioning, roles, metric definitions, and screen structure are specified in the [product docs](https://shuishui313.github.io/MediaMgDashboard/) (in Chinese).
 
-The main path is wired end to end: login and role permissions, platform accounts and daily metrics (including CSV import), live opportunity / risk detection, deals and content plans, execution lists and cross-role todos, and the audit log. All data comes from backend APIs; the home page no longer keeps mock constants. Development data lives in local JSON. Feishu SSO, Feishu approval callbacks, automated platform API sync, and the `/connections/:platform` detail page are still open.
+The main path is wired end to end: login and role permissions, platform accounts and daily metrics (including CSV import), live opportunity / risk detection, deals and content plans, execution lists and cross-role todos, and the audit log. All data comes from backend APIs. The home page shows labelled “static sample data” fallback cards only when `GetSummary` fails entirely; the execution lists and management overview have no mock fallback and show empty states instead. Development data lives in local JSON. Feishu SSO, Feishu approval callbacks, automated platform API sync, and the `/connections/:platform` detail page are still open.
 
 [中文](README.md) | **English**
 
@@ -67,7 +67,7 @@ On 2026-11-03 the repository moved to **`shuishui313/MediaMgDashboard`** (the ol
 | Login | Usable | `/login` is username and password, then returns to the path the user came from. Feishu SSO is not wired |
 | Dark mode | Partial | Tokens are ready. There is no theme toggle on the pages yet |
 
-> Home KPI cards, the platform trend, breakout opportunities, and throttling risks all come from the API. Every card and every signal carries a source label (API sync / manual entry / CSV import / development seed). The three Execution list tabs (deals, plans, todos) and the management overview are still demo data in `react-app/src/views/ExampleView.tsx`. When the API is unavailable, the KPI and signal blocks degrade explicitly to “static sample data”.
+> Home KPI cards, the platform trend, breakout opportunities, and throttling risks all come from the API. Every card and every signal carries a source label (API sync / manual entry / CSV import / development seed). The three Execution list tabs (deals, plans, todos) and the management overview also come from `DashboardManager.GetSummary().Execution`, with no mock fallback: a failed call shows an empty state. Only when `GetSummary` fails entirely do the KPI and signal blocks degrade to labelled “static sample data” fallback cards.
 
 ---
 
@@ -75,8 +75,8 @@ On 2026-11-03 the repository moved to **`shuishui313/MediaMgDashboard`** (the ol
 
 These bullets only repeat limits this README already states. The repository has no Issues for them, so this list does not invent issue numbers. How to treat the gap is in [docs/decisions.md](docs/decisions.md).
 
-- **The main path is wired. These are not.** Login and role permissions, platform accounts and daily metrics (including CSV), live opportunity / risk detection, deals and content plans, execution lists and cross-role todos, and the audit log come from backend APIs. The home page no longer keeps mock constants. Development data lives in local JSON. Still open: Feishu SSO, Feishu approval, automated platform API sync, and the `/connections/:platform` detail page.
-- **Do not put “frontend prototype / page data is still mock” back.** That opening was removed because it contradicted the status table. What remains under Current status: when the API is unavailable, KPI and signal blocks degrade to “static sample data”, and the three execution tabs plus the management overview are still described as demo data in `ExampleView.tsx`.
+- **The main path is wired. These are not.** Login and role permissions, platform accounts and daily metrics (including CSV), live opportunity / risk detection, deals and content plans, execution lists and cross-role todos, and the audit log come from backend APIs. The execution lists and management overview have no mock fallback. Development data lives in local JSON. Still open: Feishu SSO, Feishu approval, automated platform API sync, and the `/connections/:platform` detail page.
+- **Do not put “frontend prototype / page data is still mock” back.** That opening was removed because it contradicted the status table. Under Current status, keep two cases distinct: when the API fails entirely, KPI and signal blocks degrade to labelled “static sample data” fallback cards; the three execution tabs and the management overview read `GetSummary().Execution`, have no demo data, and show empty states on failure.
 - **Pages must be enabled.** On 2026-11-03 the repository moved to `shuishui313/MediaMgDashboard`. Pages must be turned on once in the new repository: Settings → Pages, Source `Deploy from a branch`, Branch `main`, folder `/docs`. After that, open https://shuishui313.github.io/MediaMgDashboard/ (in Chinese). The status table calls the product docs “Published (re-enable Pages after the repo move)”.
 
 ---
@@ -242,7 +242,7 @@ See [docs/service-invoker-auth-flow.md](docs/service-invoker-auth-flow.md) and [
 
 - `MetricDaily.Source` is `api` (platform sync), `manual` (typed in), `csv` (CSV import), or `seed` (development seed). `DataSource` on the response counts all four, and the UI shows copy such as “开发态示例数据 · 5 个账号 / 35 条日记录” (development sample · 5 accounts / 35 daily rows) or “CSV 导入 12 条” (12 rows from CSV). **Every new ingest path must set `Source` and `RecordedBy`, or the numbers cannot be traced.**
 - Period-over-period change splits the window in half and compares **average daily views** (`DailyChangeRate`), not the two totals. A 7-day window is 3 days then 4; comparing totals systematically understates the later half.
-- Missing data is not an error: `HasData = false`, the four KPIs return `"—"` with `Status = pending`, and the UI shows a “static sample data” mark so placeholders are not read as real numbers.
+- Missing data is not an error: `HasData = false`, the four KPIs return `"—"` with `Status = pending`, and the execution lists still return real records. Only when `GetSummary` fails entirely does the UI show labelled “static sample data” fallback cards along with an error banner.
 
 Development seed data is written once, only when `ASPNETCORE_ENVIRONMENT=Development` and the store has **no** `MetricDaily` rows (`Utilities/DashboardSeeder.cs`). To reset, delete `PlatformAccount.json` and `MetricDaily.json` under the local data directory and restart the API.
 
@@ -490,7 +490,7 @@ Pages charges for private repositories. This repository is public, so Pages can 
 
 1. **Feishu SSO.** Add a Feishu entry beside password login and a `/auth/feishu/callback` route. `FeishuManager.ExchangeCode` exchanges the code for `open_id` and issues this system's JWT. Feishu credentials stay in `Feishu__*` environment variables; the Feishu token is not sent to the browser. Password login and `ProtectedRoute` are done.
 2. **Align roles.** Add `RoleMappingConfig` (Feishu user group → role) and a `SyncDirectory` job that marks departed users `Disabled`. `[RequireRole(...)]` is already on Settings and on account / metric writes; remaining write APIs get it as they land.
-3. **Backend data skeleton.** `DashboardManager.GetSummary` already covers every home block, and the home page no longer keeps mock constants. Opportunity / risk thresholds are editable on `/settings` and apply on save; rule copy shares `SignalPolicyText` with the home page. The execution list and the management overview are backed by `DealManager` / `ContentPlanManager` / `TodoManager`. Opportunities and risks can be turned into todos in one click.
+3. **Backend data skeleton.** `DashboardManager.GetSummary` already covers every home block. The execution lists and management overview no longer keep mock constants; KPI, trend, and signal blocks still have labelled “static sample data” fallback cards for a failed API call. Opportunity / risk thresholds are editable on `/settings` and apply on save; rule copy shares `SignalPolicyText` with the home page. The execution list and the management overview are backed by `DealManager` / `ContentPlanManager` / `TodoManager`. Opportunities and risks can be turned into todos in one click.
 4. **Detail pages.** `/business/:dealId` and `/plans/:planId` are done. Still open: `/connections/:platform` (authorization status, retry after a failed sync).
 
 ### P1 — Make the pages usable and trustworthy

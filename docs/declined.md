@@ -22,7 +22,7 @@ This repository will not take the following. Accepted decisions are in [decision
 - **状态 / Status：** 不做。Declined.
 - 不恢复「前端原型阶段 / 页面数据仍为前端 mock / 后端仅认证骨架」。那句和状态表矛盾，`173ec7d` 已换成「主链路已跑通，飞书与平台同步未接」。
   Do not restore “frontend prototype / page data is still mock / auth skeleton only”. It contradicted the status table. `173ec7d` replaced it with “the main path is wired; Feishu and platform sync are not”.
-- 也不要删掉「当前状态」下面仍在的「静态示例数据」和 `ExampleView.tsx` 演示数据说明，借此改写成另一套完成度。见 [decisions.md](decisions.md)。
-  Do not delete the remaining “static sample data” and `ExampleView.tsx` note under Current status in order to invent a different status story. See [decisions.md](decisions.md).
+- 也不要借「当前状态」下面的兜底说明改写成另一套完成度：KPI / 信号的「静态示例数据」确实存在，但只在 `GetSummary` 整个失败时出现；执行列表与管理层概览已接 `Execution`，接口失败时显示空态，不是 `ExampleView.tsx` 的演示数据。见 [decisions.md](decisions.md)。
+  Do not use the fallback note under Current status to invent a different status story: the “static sample data” cards exist, but only when `GetSummary` fails entirely; the execution lists and management overview are backed by `Execution` and show empty states on failure, not demo data in `ExampleView.tsx`. See [decisions.md](decisions.md).
 - 这些限制目前没有对应的 GitHub Issue。文档里不要编造 Issue 编号。
   There is no GitHub Issue for these limits. Do not invent issue numbers.
