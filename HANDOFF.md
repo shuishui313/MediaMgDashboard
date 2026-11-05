@@ -37,7 +37,9 @@
 
 | 版本 | 时间 | 内容 |
 | --- | --- | --- |
-| （待提交） | 2026-11-05 | CI / Pages 启用后同步中英文 README、AGENTS、decisions 与 HANDOFF 中的状态描述 |
+| `c1c8bd9` | 2026-11-05 | 远端提交：网页端覆盖 `.github/workflows/ci.yml`，加入手动触发、最小权限与 job 超时（CI 运行 success） |
+| `f5d555d` | 2026-11-05 | 同步 `docs/ci-workflow.yml` 模板：手动触发、最小权限、job 超时（CI 运行 success） |
+| `4972b42` | 2026-11-05 | CI / Pages 启用后同步中英文 README、AGENTS、decisions 与 HANDOFF 中的状态描述 |
 | `210c2e8` | 2026-11-05 | 远端提交：在网页端创建 `.github/workflows/ci.yml`，启用 CI（首次运行 success） |
 | `adb785f` | 2026-11-05 | 合并远端 `ce0cfde`（UX 三件套 / AGENTS / decisions），修正「执行列表仍是演示数据」「首页没有 mock 常量」等与代码矛盾的描述，中英同步 |
 | `ce0cfde` | 2026-11-05 | 远端提交：新增 `AGENTS.md`、`docs/decisions.md`、`docs/declined.md`、PR 模板与 README「已知限制」章节 |
@@ -314,7 +316,7 @@
 
 代码：
 
-- `docs/ci-workflow.yml`（CI 模板）：`push main` / PR 触发，两个 job 并行。后端 `dotnet build Services/Services.sln -c Release` + `dotnet test App.Api.Tests`；前端 `npm ci` + `check-ts` + `vitest run` + `lint` + `build`。
+- `docs/ci-workflow.yml`（CI 模板，与 `.github/workflows/ci.yml` 同步）：`push main` / PR / Actions 页面手动触发（`workflow_dispatch`），`permissions: contents: read`，两个 job 并行且各限 20 分钟。后端 `dotnet build Services/Services.sln -c Release` + `dotnet test App.Api.Tests`；前端 `npm ci` + `check-ts` + `vitest run` + `lint` + `build`。
 - `Services/App.Api.Tests/Tests/` 新增 6 个测试文件、84 条用例：商务单阶段机（跳级、倒退、终点、已丢失）、内容计划状态机、指标录入校验（日期 / 未来 / 过旧 / 负数 / 互动超播放）、阈值文案、审计标识与格式化、CSV 解析（BOM / 引号内逗号与换行 / 物理行号）。都是纯逻辑，不依赖数据库或凭据。
 - 清掉前端 23 个存量 lint error：`any` 改 `unknown`（`ApiClient` / `AppDtos` / `ProtectedRoute` / `LoginView` / `debounce` / `vite.config.ts`）、空接口改 `Record<string, never>`、移除未使用的 `SampleEnum`、给 vite 插件补 `Plugin` / `Connect` 类型、空 catch 加注释说明。
 - 信号转跟进：`TodoItem.SourceKey` + `SaveTodoRequestDto.SourceKey`；`TodoManager.SaveTodo` 在写入前查同来源未完成待办，命中就返回「已经在待办里了」不重复建单，角色放开到 `admin / operations / planner`。`TodoDto` 回传 `SourceKey`，审计摘要区分「手工新建」与「从首页信号生成待办」。
