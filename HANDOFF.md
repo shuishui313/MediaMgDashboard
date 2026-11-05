@@ -1,7 +1,7 @@
 # HANDOFF
 
-> 交接文档 · 更新于 2026-11-04
-> 仓库：`shuishui313/MediaMgDashboard`（public，2026-11-03 从 `gsspai/mediaai` 迁入） · 分支 `main` · 工作区改动未提交（本轮 CI + 信号转待办）
+> 交接文档 · 更新于 2026-11-05
+> 仓库：`shuishui313/MediaMgDashboard`（public，2026-11-03 从 `gsspai/mediaai` 迁入） · 分支 `main` · 工作区改动待提交（本轮合并远端双语 README 并同步状态描述）
 
 ---
 
@@ -24,6 +24,7 @@
 
 - CI 工作流已写好但**尚未启用**：内容在 `docs/ci-workflow.yml`，待在 GitHub 网页端复制为 `.github/workflows/ci.yml`（见 2.14 的推送限制说明）。
 - 首页机会 / 风险信号可一键生成待办（风险给运营、机会给策划），`SourceKey` 保证同一条信号不重复建单。
+- 中英文 README 双文件维护（`README.md` / `README.en.md`），改状态口径时两份要同步；合并远端 `dd8196f` 时是 fast-forward，无 Git 冲突，但两个文件开头的「前端原型阶段」描述与状态表矛盾，已统一改为「主链路已跑通、飞书与平台同步未接」。
 
 **未开始**：飞书免登、`RoleMappingConfig` / 用户组同步、平台 API 同步、飞书审批回写报价阶段、审计导出、三态组件统一。`/connections/:platform` 仍是占位。
 
@@ -35,7 +36,9 @@
 
 | 版本 | 时间 | 内容 |
 | --- | --- | --- |
-| （未提交） | 2026-11-04 | CI、84 条后端单测、lint 存量清零、首页信号一键转待办（按 `SourceKey` 幂等） |
+| （待提交） | 2026-11-05 | 合并远端双语 README（`dd8196f`），修掉中英文开头「前端原型 / 数据仍是 mock」的过时描述，同步 lint 说明 |
+| `dd8196f` | 2026-11-05 | 远端提交：新增 `README.en.md` + 中文 README 语言切换链接 |
+| `149abc5` | 2026-11-04 | CI 模板、84 条后端单测、lint 存量清零、首页信号一键转待办（按 `SourceKey` 幂等） |
 | `3a1ab2b` | 2026-11-03 | 操作审计（`AuditLog` + `AuditRecorder` + 设置页面板）；仓库迁到 `shuishui313/MediaMgDashboard` |
 | `55eba5b` | 2026-10-28 | 执行列表接真实接口：`Deal` / `ContentPlan` / `TodoItem` + 三个 Manager + 四个页面；删除 `/analysis/:viewId` |
 | `58be3ba` | 2026-10-28 | 业务角色权限落地：`[RequireRole]`、403 中文原因、管理员引导、前端入口按角色显隐 |

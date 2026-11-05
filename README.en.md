@@ -4,7 +4,7 @@ MediaMgDashboard (formerly MediaAI) is the daily ops workbench for a personal me
 
 Positioning, roles, metric definitions, and screen structure are specified in the [product docs](https://shuishui313.github.io/MediaMgDashboard/).
 
-The repository is in a **frontend prototype stage**: workbench pages, role views, and the design system are in place; page data is still frontend mock, and the backend still only has an auth skeleton.
+The main path is wired end to end: login and role permissions, platform accounts and daily metrics (including CSV import), live opportunity / risk detection, deals and content plans, execution lists and cross-role todos, and the audit log. All data comes from backend APIs; the home page no longer keeps mock constants. Development data lives in local JSON. Feishu SSO, Feishu approval callbacks, automated platform API sync, and the `/connections/:platform` detail page are still open.
 
 [中文](README.md) | **English**
 
@@ -124,7 +124,7 @@ Common scripts:
 | `npm run dev` | Dev server |
 | `npm run build` | Typecheck + production build into `dist/` |
 | `npm run check-ts` | Typecheck only |
-| `npm run lint` | ESLint (`eslint.config.js` depends on `typescript-eslint`; if it is missing, run `npm i -D typescript-eslint` first) |
+| `npm run lint` | ESLint (`eslint.config.js` uses the `typescript-eslint` dev dependency, which is already in `package.json`) |
 | `npm run format` | Prettier |
 
 ### Backend
