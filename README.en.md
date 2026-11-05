@@ -42,7 +42,7 @@ The main path is wired end to end: login and role permissions, platform accounts
 
 The product doc (in Chinese) is a single static page (`docs/product-overview.html`, entered from `docs/index.html`), with no build and no external dependencies. GitHub Pages publishes the `/docs` directory of the `main` branch.
 
-On 2026-11-03 the repository moved to **`shuishui313/MediaMgDashboard`** (the old `gsspai/mediaai` repo is retired). Pages must be turned on once in the **new** repository: Settings → Pages, Source `Deploy from a branch`, Branch `main`, folder `/docs`. After that, open https://shuishui313.github.io/MediaMgDashboard/ (in Chinese). A push to `main` republishes in about a minute, with no build step.
+On 2026-11-03 the repository moved to **`shuishui313/MediaMgDashboard`** (the old `gsspai/mediaai` repo is retired). Pages was enabled on the new repository on 2026-11-05 (Source `Deploy from a branch`, Branch `main`, folder `/docs`); https://shuishui313.github.io/MediaMgDashboard/ (in Chinese) now returns 200. A push to `main` republishes in about a minute, with no build step.
 
 ---
 
@@ -55,9 +55,9 @@ On 2026-11-03 the repository moved to **`shuishui313/MediaMgDashboard`** (the ol
 | API permissions | First batch wired | Thresholds are `admin` only. Account and metric writes are limited to `admin` / `operations`. Unauthorized calls return 403 plus a Chinese reason. See [Roles and permissions](#roles-and-permissions) |
 | Audit log | Done | 11 kinds of writes land in `AuditLog`. `/settings` can filter and expand field-level diffs. Admin read only. Retained 90 days |
 | Signal → follow-up | Done | Opportunity / risk cards on the home page can create a todo in one click, deduped by `SourceKey`. Risks go to operations; opportunities go to planning |
-| Continuous integration | Config ready, not enabled | The workflow body is in `docs/ci-workflow.yml`. The IDE OAuth credential has no `workflow` scope, so copy it to `.github/workflows/ci.yml` in the GitHub UI before it runs on its own: backend build + 84 unit tests, frontend typecheck / 17 unit tests / lint / production build |
+| Continuous integration | Enabled (first run passed) | `.github/workflows/ci.yml` runs backend build + 84 unit tests and frontend typecheck / 17 unit tests / lint / production build. The template stays in sync in `docs/ci-workflow.yml`; [see the runs](https://github.com/shuishui313/MediaMgDashboard/actions) |
 | Shared design system | Done | `PageShell` / `Panel` / `SectionHeader` / `StatusPill` / `TrendChart` / `SegmentedTabs` |
-| Product docs | Published (re-enable Pages after the repo move) | Target [shuishui313.github.io/MediaMgDashboard](https://shuishui313.github.io/MediaMgDashboard/) (in Chinese), covering positioning, roles, metric definitions, and acceptance criteria |
+| Product docs | Published | [shuishui313.github.io/MediaMgDashboard](https://shuishui313.github.io/MediaMgDashboard/) (in Chinese), covering positioning, roles, metric definitions, and acceptance criteria. Pages is enabled on the new repo from `main` / `/docs` |
 | Platform connections (`/connections`) | Done (manual + CSV) | Account CRUD, disable, manual daily metrics, CSV bulk import, and recent entries. `/connections/:platform` is still a placeholder. OAuth is not wired |
 | Deals and plans | Done (no approval flow) | `/business`, `/business/:dealId`, `/plans`, and `/plans/:planId` use live data. Quote approval is still moved by hand. Feishu approval is not wired |
 | Detail pages | Partial | `/connections/:platform` is still a placeholder. `/settings` implements threshold configuration. `/analysis/:viewId` has been removed |
@@ -77,7 +77,7 @@ These bullets only repeat limits this README already states. The repository has 
 
 - **The main path is wired. These are not.** Login and role permissions, platform accounts and daily metrics (including CSV), live opportunity / risk detection, deals and content plans, execution lists and cross-role todos, and the audit log come from backend APIs. The execution lists and management overview have no mock fallback. Development data lives in local JSON. Still open: Feishu SSO, Feishu approval, automated platform API sync, and the `/connections/:platform` detail page.
 - **Do not put “frontend prototype / page data is still mock” back.** That opening was removed because it contradicted the status table. Under Current status, keep two cases distinct: when the API fails entirely, KPI and signal blocks degrade to labelled “static sample data” fallback cards; the three execution tabs and the management overview read `GetSummary().Execution`, have no demo data, and show empty states on failure.
-- **Pages must be enabled.** On 2026-11-03 the repository moved to `shuishui313/MediaMgDashboard`. Pages must be turned on once in the new repository: Settings → Pages, Source `Deploy from a branch`, Branch `main`, folder `/docs`. After that, open https://shuishui313.github.io/MediaMgDashboard/ (in Chinese). The status table calls the product docs “Published (re-enable Pages after the repo move)”.
+- **Only accounts with the `workflow` scope can edit the CI file.** `.github/workflows/ci.yml` was created in the GitHub UI on 2026-11-05 and its first run passed. The IDE OAuth credential lacks that scope, so it cannot push or modify this path. Edit CI in the web UI, or change `docs/ci-workflow.yml` and copy it over.
 
 ---
 
@@ -478,7 +478,7 @@ All three inputs are supplied by the person who runs the workflow. They are not 
 
 The product docs (`docs/`) are not part of that pipeline. GitHub Pages publishes them on their own: static files under `/docs` on `main`, with no build. Push doc changes to `main` and Pages republishes, usually within a minute.
 
-Pages charges for private repositories. This repository is public, so Pages can be enabled directly.
+Pages charges for private repositories. This repository is public, and Pages is already enabled.
 
 ---
 

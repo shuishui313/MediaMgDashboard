@@ -10,8 +10,8 @@ Accepted decisions that the README or git history already records. No new untest
   The repository moved from `gsspai/mediaai` to **`shuishui313/MediaMgDashboard`**. The old repository is retired.
 - 这次改的是仓库名。中文 README 标题现为 `MediaMgDashboard（MediaAI）`（2026-11-05，`173ec7d`）。产品文档 `docs/product-overview.html` 仍用产品名 MediaAI。英文 README 标题是 MediaMgDashboard (formerly MediaAI)。不要借这次改名去改界面文案。
   The rename is the repository name. The Chinese README title is now `MediaMgDashboard（MediaAI）` (2026-11-05, `173ec7d`). The product doc `docs/product-overview.html` still says MediaAI. The English README title says MediaMgDashboard (formerly MediaAI). Do not rewrite UI copy as part of the rename.
-- 文档站目标地址是 https://shuishui313.github.io/MediaMgDashboard/ 。README 写的是迁库后要在新仓库 Settings → Pages 开启一次（`main` / `/docs`），「当前状态」同时写着「已发布（仓库迁移后需重新开启 Pages）」。两句都保留，不要改成「Pages 已经可用」或「站点不存在」。
-  The target docs URL is that Pages address. The README says Pages must be enabled once on the new repository, and the status table also says “published (re-enable after the move)”. Keep both. Do not collapse them.
+- 文档站目标地址是 https://shuishui313.github.io/MediaMgDashboard/ 。迁库后需要在新仓库开启一次 Pages；这项已于 2026-11-05 完成（`main` / `/docs`），站点返回 200，「当前状态」写作「已发布」。不要再写「需重新开启 Pages」或「站点不存在」。
+  The target docs URL is that Pages address. Re-enabling Pages on the new repository was completed on 2026-11-05 (`main` / `/docs`); the site returns 200 and the status table says “Published”. Do not write “re-enable Pages” or “site missing” again.
 
 ## 中英双文件 / Dual-file bilingual README
 
@@ -32,3 +32,13 @@ Accepted decisions that the README or git history already records. No new untest
   The same paragraph names what is still open: Feishu SSO, Feishu approval, automated platform API sync, and the `/connections/:platform` detail page.
 - 「当前状态」下面把两类行为分开写：接口完全不可用时 KPI 与信号降级为带「静态示例数据」标记的兜底卡片；执行列表三个 Tab 与管理层概览来自 `DashboardManager.GetSummary().Execution`，没有演示数据，失败时显示空态文案。不要把这两类混成「整个仓库仍是 mock」，也不要声称首页完全没有兜底常量。
   Under Current status, keep two cases apart: when the API fails entirely, KPI and signal blocks degrade to labelled “static sample data” fallback cards; the three execution tabs and the management overview read `DashboardManager.GetSummary().Execution`, have no demo data, and show empty states on failure. Do not collapse the two into “the whole repo is still mock”, and do not claim the home page has no fallback constants.
+
+## CI 与 Pages 已启用 / CI and Pages are live
+
+- **状态 / Status：** 2026-11-05 生效。Live on 2026-11-05.
+- `.github/workflows/ci.yml`（网页端创建，`210c2e8`）与 `docs/ci-workflow.yml` 模板内容一致；首次 CI 运行 `41991927631` 为 success（后端 84 条单测、前端 17 条单测 + 类型 + lint + 构建）。
+  `.github/workflows/ci.yml` (created in the web UI, `210c2e8`) matches the `docs/ci-workflow.yml` template. The first CI run `41991927631` passed: 84 backend tests plus 17 frontend tests, typecheck, lint, and build.
+- Pages 的 `pages build and deployment` 也为 success，`https://shuishui313.github.io/MediaMgDashboard/` 返回 200。
+  The Pages build/deployment run also passed, and `https://shuishui313.github.io/MediaMgDashboard/` returns 200.
+- IDE 的 OAuth 凭据 scope 是 `gist, read:org, repo`，没有 `workflow`；修改 `.github/workflows/*` 仍需在网页端或用带该 scope 的凭据。
+  The IDE OAuth credential has `gist, read:org, repo` but not `workflow`; edits to `.github/workflows/*` still need the web UI or a credential with that scope.

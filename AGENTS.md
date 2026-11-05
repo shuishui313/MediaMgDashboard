@@ -63,7 +63,7 @@ From the design-system section of the README.
 
 ## 仓库操作 / Repo operations
 
-- 持续集成的正文在 `docs/ci-workflow.yml`。README 写明：IDE 的 OAuth 凭据没有 `workflow` 权限，需要在 GitHub 网页端把它复制为 `.github/workflows/ci.yml` 才会自动跑。不要为了启用 CI 去改应用代码。
-  The workflow body stays in `docs/ci-workflow.yml` until someone copies it to `.github/workflows/ci.yml` in the GitHub UI. Do not refactor the app to work around that.
-- 产品文档站是 `docs/` 下的静态文件，由 GitHub Pages 从 `main` 的 `/docs` 发布。迁库之后 Pages 需要在新仓库里开启一次。
-  Pages serves `/docs` on `main` and must be enabled once on the new repository.
+- CI 已于 2026-11-05 启用：工作流在 `.github/workflows/ci.yml`，`docs/ci-workflow.yml` 是同步的模板，首次运行通过。IDE 的 OAuth 凭据没有 `workflow` 权限，不能推送或修改 `.github/workflows/*`；要改 CI 规则请用网页端编辑，或改模板后再复制过去。不要为了绕过权限去改应用代码。
+  CI has been enabled since 2026-11-05: `.github/workflows/ci.yml` is the live workflow, `docs/ci-workflow.yml` is the synced template, and the first run passed. The IDE OAuth credential lacks the `workflow` scope, so it cannot push or edit `.github/workflows/*`. Change CI in the web UI or edit the template and copy it over. Do not refactor the app to work around that.
+- 产品文档站是 `docs/` 下的静态文件，由 GitHub Pages 从 `main` 的 `/docs` 发布。Pages 已于 2026-11-05 在新仓库启用，线上地址返回 200；改文档只需推送 `main`。
+  Pages serves `/docs` on `main` and was enabled on the new repository on 2026-11-05. The site returns 200; pushing docs to `main` republishes them.

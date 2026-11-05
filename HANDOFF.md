@@ -1,7 +1,7 @@
 # HANDOFF
 
 > 交接文档 · 更新于 2026-11-05
-> 仓库：`shuishui313/MediaMgDashboard`（public，2026-11-03 从 `gsspai/mediaai` 迁入） · 分支 `main` · 工作区改动待提交（本轮合并远端双语 README 并同步状态描述）
+> 仓库：`shuishui313/MediaMgDashboard`（public，2026-11-03 从 `gsspai/mediaai` 迁入） · 分支 `main` · 工作区改动待提交（本轮 CI / Pages 启用后的文档同步）
 
 ---
 
@@ -22,7 +22,7 @@
 - 首页执行列表三块（商务单 / 内容计划 / 跨角色待办）与管理层概览来自 `Deal` / `ContentPlan` / `TodoItem` 三个文档，`/business`、`/business/:dealId`、`/plans`、`/plans/:planId` 四个页面均可用（新建、编辑、阶段推进/复核）。待办里的「自动」条目由单据状态推导，不落库。
 - 操作审计已落地：11 类写操作落 `AuditLog`（字段级前后值），`/settings` 底部可筛选、按天分组、展开看 diff；只保留 90 天，查询时自动清理。仅管理员可读。
 
-- CI 工作流已写好但**尚未启用**：内容在 `docs/ci-workflow.yml`，待在 GitHub 网页端复制为 `.github/workflows/ci.yml`（见 2.14 的推送限制说明）。
+- **CI 与 Pages 已于 2026-11-05 启用**：`.github/workflows/ci.yml`（网页端创建，`210c2e8`）与模板 `docs/ci-workflow.yml` 一致，首次 CI 运行成功；Pages `main` / `/docs` 已发布，站点返回 200。IDE 凭据仍无 `workflow` scope，改工作流要走网页端。
 - 远端 `ce0cfde` 带来的 `AGENTS.md` / `docs/decisions.md` / `docs/declined.md` 已合并；这三份文档把「执行列表仍是演示数据」「首页没有 mock 常量」写成了既定事实，与代码不符，已连同中英文 README 一起按实际行为修正。
 - 首页机会 / 风险信号可一键生成待办（风险给运营、机会给策划），`SourceKey` 保证同一条信号不重复建单。
 - 中英文 README 双文件维护（`README.md` / `README.en.md`），改状态口径时两份要同步；合并远端 `dd8196f` 时是 fast-forward，无 Git 冲突，但两个文件开头的「前端原型阶段」描述与状态表矛盾，已统一改为「主链路已跑通、飞书与平台同步未接」。
@@ -37,7 +37,9 @@
 
 | 版本 | 时间 | 内容 |
 | --- | --- | --- |
-| （待提交） | 2026-11-05 | 合并远端 `ce0cfde`（UX 三件套 / AGENTS / decisions），修正「执行列表仍是演示数据」「首页没有 mock 常量」等与代码矛盾的描述，中英同步 |
+| （待提交） | 2026-11-05 | CI / Pages 启用后同步中英文 README、AGENTS、decisions 与 HANDOFF 中的状态描述 |
+| `210c2e8` | 2026-11-05 | 远端提交：在网页端创建 `.github/workflows/ci.yml`，启用 CI（首次运行 success） |
+| `adb785f` | 2026-11-05 | 合并远端 `ce0cfde`（UX 三件套 / AGENTS / decisions），修正「执行列表仍是演示数据」「首页没有 mock 常量」等与代码矛盾的描述，中英同步 |
 | `ce0cfde` | 2026-11-05 | 远端提交：新增 `AGENTS.md`、`docs/decisions.md`、`docs/declined.md`、PR 模板与 README「已知限制」章节 |
 | `173ec7d` | 2026-11-05 | 合并远端双语 README（`dd8196f`），修掉中英文开头「前端原型 / 数据仍是 mock」的过时描述，同步 lint 说明 |
 | `dd8196f` | 2026-11-05 | 远端提交：新增 `README.en.md` + 中文 README 语言切换链接 |
@@ -322,8 +324,8 @@
 
 - `dotnet build` 0 错误、`dotnet test` 84/84、`tsc --noEmit` 0 错误、`vitest run` 17/17、`npm run build` 成功、`npm run lint` 0 error / 4 warning。
 - `/tmp/verify_signal_todo.py` 11/11：造 7 天指标触发掉速信号 → 访客建待办 403 → 策划角色生效且能转待办 → `SourceKey` 回传正确 → 同信号重复转换被幂等拦下且待办数不变 → 审计写入「从首页信号生成待办」。
-- **推送限制**：GitHub 拒绝 OAuth App 推送 `.github/workflows/*.yml`（`refusing to allow an OAuth App to create or update workflow ... without workflow scope`）。因此工作流以模板形式放在 `docs/ci-workflow.yml`，代码与单测照常推送；要启用 CI，在仓库网页端 Add file → Create new file，路径填 `.github/workflows/ci.yml`，把模板内容原样粘贴提交即可（网页端用的是你的账号权限）。或者改用带 `workflow` scope 的 PAT 推送该文件。
-- 说明：CI 工作流本身要等启用后在 GitHub Actions 页面看首次运行结果；本机没跑 Actions 运行环境。界面级点击验证未做（起常驻服务被 IDE 判定为长任务取消了两次），但类型、构建与接口链路均已覆盖。
+- **推送限制（仍适用）**：GitHub 拒绝 OAuth App 推送 `.github/workflows/*.yml`（`without workflow scope`）。工作流已在 2026-11-05 由网页端创建（`210c2e8`），内容与 `docs/ci-workflow.yml` 一致；IDE 凭据 scope 为 `gist, read:org, repo`，以后**修改**该文件仍需网页端或带 `workflow` scope 的凭据。
+- 启用结果：首次 CI 运行 `41991927631` 为 success（后端 84 条单测 + 前端 17 条单测 / 类型 / lint / 构建）；`pages build and deployment` 也为 success，`https://shuishui313.github.io/MediaMgDashboard/` 返回 200。界面级点击验证未做（起常驻服务被 IDE 判定为长任务取消了两次），但类型、构建与接口链路均已覆盖。
 
 ---
 
@@ -391,7 +393,7 @@
 - 删掉 `Deal.json` / `ContentPlan.json` / `TodoItem.json` 会重置商务单、内容计划与人工待办（`ExecutionSeeder` 只在 Development 且没有 Deal 时写示例数据）。
 - **新增写接口时记得加审计**：写完库调用 `_auditRecorder.RecordAsync(...)`，只传白名单字段的前后值；失败分支不要写（否则「被拒绝的操作」会出现在审计里）。可用 `AuditText.*` 格式化，避免把 GUID、空串、英文标识塞进 diff。
 - 审计 `AuditLog.json` 会持续增长，本地 JSON 实现每次查询全量读取；切 Postgres 前不要指望它扛大数据量。需要重置：删掉 `~/CodeBuddy/Resources/<AppName>/AuditLog.json`。
-- 仓库已迁到 `shuishui313/MediaMgDashboard`，**Pages 需要在仓库 Settings → Pages 重新开启一次**（`main` / `/docs`），线上地址变为 `https://shuishui313.github.io/MediaMgDashboard/`；旧仓库 `gsspai/mediaai` 不再推送。
+- 仓库已迁到 `shuishui313/MediaMgDashboard`，Pages 已于 2026-11-05 在新仓库开启（`main` / `/docs`），线上地址 `https://shuishui313.github.io/MediaMgDashboard/` 返回 200；旧仓库 `gsspai/mediaai` 不再推送。
 
 ### 5.2 本地环境
 

@@ -42,7 +42,7 @@ MediaAI 面向个人自媒体矩阵的日常运营：把多个平台账号的播
 
 产品文档是单文件静态页（`docs/product-overview.html`，入口页 `docs/index.html`），无构建与外部依赖，由 GitHub Pages 从 `main` 分支的 `/docs` 目录发布。
 
-仓库已于 2026-11-03 迁到 **`shuishui313/MediaMgDashboard`**（旧的 `gsspai/mediaai` 停用）。Pages 需要在**新仓库** Settings → Pages 开启一次：Source `Deploy from a branch`、Branch `main`、目录 `/docs`，之后访问 https://shuishui313.github.io/MediaMgDashboard/ ；推送到 `main` 约 1 分钟自动发布，无需构建。
+仓库已于 2026-11-03 迁到 **`shuishui313/MediaMgDashboard`**（旧的 `gsspai/mediaai` 停用）。Pages 已于 2026-11-05 在新仓库开启（Source `Deploy from a branch`、Branch `main`、目录 `/docs`），线上地址 https://shuishui313.github.io/MediaMgDashboard/ 已返回 200；推送到 `main` 约 1 分钟自动重新发布，无需构建。
 
 ---
 
@@ -55,9 +55,9 @@ MediaAI 面向个人自媒体矩阵的日常运营：把多个平台账号的播
 | 接口权限 | 已接入首批 | 阈值仅 `admin`，账号与指标写接口限 `admin` / `operations`；越权返回 403 + 中文原因，见[角色与权限](#角色与权限) |
 | 操作审计 | 已完成 | 11 类写操作落 `AuditLog`，`/settings` 可筛选、展开字段级 diff；仅管理员可读，保留 90 天 |
 | 信号转跟进 | 已完成 | 首页机会 / 风险卡片可一键生成待办，按 `SourceKey` 幂等去重；风险给运营、机会给策划 |
-| 持续集成 | 配置待启用 | 工作流内容在 `docs/ci-workflow.yml`；因 IDE 的 OAuth 凭据无 `workflow` 权限，需在 GitHub 网页端把它复制为 `.github/workflows/ci.yml` 才能自动跑：后端 build + 84 条单测、前端类型检查 / 17 条单测 / lint / 生产构建 |
+| 持续集成 | 已启用（首次运行通过） | `.github/workflows/ci.yml`：后端 build + 84 条单测、前端类型检查 / 17 条单测 / lint / 生产构建；模板同步保存在 `docs/ci-workflow.yml`，[查看运行记录](https://github.com/shuishui313/MediaMgDashboard/actions) |
 | 统一设计系统 | 已完成 | `PageShell` / `Panel` / `SectionHeader` / `StatusPill` / `TrendChart` / `SegmentedTabs` |
-| 产品文档 | 已发布（仓库迁移后需重新开启 Pages） | 目标地址 [shuishui313.github.io/MediaMgDashboard](https://shuishui313.github.io/MediaMgDashboard/)，含定位、角色、指标口径与验收标准 |
+| 产品文档 | 已发布 | [shuishui313.github.io/MediaMgDashboard](https://shuishui313.github.io/MediaMgDashboard/)，含定位、角色、指标口径与验收标准；Pages 已在新仓库开启，`main` / `/docs` |
 | 平台连接页（`/connections`） | 已完成（手工 + CSV） | 账号增删改查、停用、手工录入日指标、CSV 批量导入、最近录入明细；`/connections/:platform` 仍是占位，OAuth 授权未接 |
 | 商务与计划页 | 已完成（无审批流） | `/business`、`/business/:dealId`、`/plans`、`/plans/:planId` 均为真实数据；报价审批仍靠人工推进，未接飞书审批 |
 | 详情页 | 部分 | `/connections/:platform` 仍是占位；`/settings` 已实现阈值配置；`/analysis/:viewId` 已移除 |
@@ -77,7 +77,7 @@ MediaAI 面向个人自媒体矩阵的日常运营：把多个平台账号的播
 
 - **主链路已跑通，这几项还没接。** 登录与角色权限、平台账号与日指标（含 CSV）、机会 / 风险实时判定、商务单与内容计划、执行列表与跨角色待办、操作审计，数据由后端接口返回；执行列表与管理层概览没有 mock 兜底。开发态数据存本地 JSON。尚未接入：飞书免登、飞书审批、平台 API 自动同步、`/connections/:platform` 详情页。
 - **不要把「前端原型 / 页面仍是 mock」写回去。** 这句开篇已经删掉，因为它和状态表矛盾。「当前状态」下面要分清两类：接口完全不可用时 KPI 与信号显式降级为带「静态示例数据」标记的兜底卡片；执行列表三个 Tab 与管理层概览已接 `GetSummary().Execution`，没有演示数据，失败时显示空态。
-- **Pages 需要开启。** 仓库已于 2026-11-03 迁到 `shuishui313/MediaMgDashboard`。Pages 需要在新仓库 Settings → Pages 开启一次：Source `Deploy from a branch`、Branch `main`、目录 `/docs`，之后访问 https://shuishui313.github.io/MediaMgDashboard/ 。「当前状态」里产品文档一行写的是「已发布（仓库迁移后需重新开启 Pages）」。
+- **CI 工作流文件只能由有 `workflow` 权限的账号改。** `.github/workflows/ci.yml` 已于 2026-11-05 在 GitHub 网页端创建并首次运行通过；IDE 注入的 OAuth 凭据只有 `repo` 等 scope，不能推送或修改该文件。改 CI 规则请在网页端编辑，或先改 `docs/ci-workflow.yml` 再复制过去。
 
 ---
 
