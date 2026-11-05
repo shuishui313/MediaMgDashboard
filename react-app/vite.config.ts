@@ -1,4 +1,5 @@
 import { defineConfig } from 'vitest/config'
+import type { Connect, Plugin } from 'vite'
 import react from '@vitejs/plugin-react-swc'
 import tailwindcss from '@tailwindcss/vite'
 import tsConfigPaths from 'vite-tsconfig-paths'
@@ -11,9 +12,9 @@ export default defineConfig(async () => {
   const checker = (await import('vite-plugin-checker')).default
 
   // Inline plugin: restart dev server when dependency manifests change (Vite v5 compatible)
-  const restartOnDepsChange = () => ({
+  const restartOnDepsChange = (): Plugin => ({
     name: 'restart-on-deps-change',
-    configureServer(server: any) {
+    configureServer(server) {
       const configDir = path.dirname(fileURLToPath(import.meta.url))
 
       const files = [
@@ -36,17 +37,26 @@ export default defineConfig(async () => {
   })
 
   // Dynamic site.webmanifest from env (dev + build)
-  const dynamicManifest = () => ({
+  type PackageMeta = { name?: string; description?: string }
+
+  const readPackageMeta = (): PackageMeta => {
+    try {
+      return createRequire(import.meta.url)('./package.json') as PackageMeta
+    } catch {
+      // package.json 缺失时回落到默认名，不影响开发服务启动。
+      return {}
+    }
+  }
+
+  const dynamicManifest = (): Plugin => ({
     name: 'dynamic-manifest',
-    configureServer(server: any) {
-      const require = createRequire(import.meta.url)
-      let pkg: any = {}
-      try { pkg = require('./package.json') } catch {}
+    configureServer(server) {
+      const pkg = readPackageMeta()
       const appName = process.env.VITE_APP_NAME || pkg.name || 'App'
       const appDescription = process.env.VITE_APP_DESCRIPTION || pkg.description || ''
       const manifest = buildManifest(appName, appDescription)
 
-      server.middlewares.use((req: any, res: any, next: any) => {
+      server.middlewares.use((req: Connect.IncomingMessage, res, next: Connect.NextFunction) => {
         if (req.url === '/site.webmanifest') {
           res.setHeader('Content-Type', 'application/manifest+json')
           res.end(JSON.stringify(manifest))
@@ -56,9 +66,7 @@ export default defineConfig(async () => {
       })
     },
     generateBundle() {
-      const require = createRequire(import.meta.url)
-      let pkg: any = {}
-      try { pkg = require('./package.json') } catch {}
+      const pkg = readPackageMeta()
       const appName = process.env.VITE_APP_NAME || pkg.name || 'App'
       const appDescription = process.env.VITE_APP_DESCRIPTION || pkg.description || ''
       const manifest = buildManifest(appName, appDescription)

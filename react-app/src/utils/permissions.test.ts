@@ -69,10 +69,12 @@ describe('商务单与内容计划权限', () => {
     expect(canEditPlans([ANALYST_ROLE])).toBe(false);
   });
 
-  it('人工待办只有管理员与运营能建', () => {
+  it('人工待办由管理员、运营、策划创建', () => {
     expect(canCreateTodos([ADMIN_ROLE])).toBe(true);
     expect(canCreateTodos([OPERATIONS_ROLE])).toBe(true);
+    expect(canCreateTodos([PLANNER_ROLE])).toBe(true);
     expect(canCreateTodos([SALES_ROLE])).toBe(false);
+    expect(canCreateTodos([EDITOR_ROLE])).toBe(false);
   });
 
   it('财务单独持有时按报价复核处理，叠加商务则等同商务', () => {

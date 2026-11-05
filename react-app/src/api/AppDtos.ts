@@ -1,11 +1,8 @@
-import { SampleEnum } from "./Enums";
-
 export interface ChangePasswordRequestDto {
   NewPassword: string;
 }
 
-export interface GetSessionRequestDto {
-}
+export type GetSessionRequestDto = Record<string, never>;
 
 export interface LoginRequestDto {
   Email: string;
@@ -33,13 +30,13 @@ export interface SendPasswordResetRequestDto {
 export interface ServiceInvocationRequestDto {
   ManagerName: string;
   MethodName: string;
-  Parameters: (any | null)[] | null;
+  Parameters: unknown[] | null;
   AccessToken: string | null;
   RefreshToken: string | null;
 }
 
 export interface ServiceInvocationResponseEnvelopeDto {
-  Result: any | null;
+  Result: unknown | null;
   AccessToken: string | null;
   RefreshToken: string | null;
   Session: SessionDto | null;
@@ -48,7 +45,7 @@ export interface ServiceInvocationResponseEnvelopeDto {
 export interface ServiceStreamingRequestDto {
   ManagerName: string;
   MethodName: string;
-  Parameters: (any | null)[] | null;
+  Parameters: unknown[] | null;
   AccessToken: string | null;
   RefreshToken: string | null;
 }
@@ -316,7 +313,7 @@ export interface ImportMetricsCsvResultDto {
 }
 
 /** 读取阈值配置的请求，目前没有筛选条件，保留空对象以符合一方法一入参的约定。 */
-export interface GetSignalThresholdsRequestDto {}
+export type GetSignalThresholdsRequestDto = Record<string, never>;
 
 /**
  * 机会 / 风险阈值。IsCustomized 为 false 表示库里没有配置、当前走默认值。
@@ -560,6 +557,7 @@ export interface TodoDto {
   Urgency: string;
   Tone: string;
   Href: string;
+  SourceKey: string;
   DueDate: string | null;
   Status: string;
   CreatedBy: string;
@@ -588,4 +586,6 @@ export interface SaveTodoRequestDto {
   Priority: string;
   DueDate?: string | null;
   Href: string;
+  /** 来源标识，用于「同一条信号只生成一次待办」的幂等判断 */
+  SourceKey?: string;
 }

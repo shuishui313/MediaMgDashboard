@@ -44,8 +44,8 @@ export const DEAL_STAGE_ROLES = [ADMIN_ROLE, SALES_ROLE, FINANCE_ROLE] as const;
 /** 内容计划新建 / 编辑 / 状态推进：管理员、策划、运营、剪辑。 */
 export const PLAN_EDITOR_ROLES = [ADMIN_ROLE, PLANNER_ROLE, OPERATIONS_ROLE, EDITOR_ROLE] as const;
 
-/** 人工待办：管理员与运营可新建；所有业务角色都能勾选完成。 */
-export const TODO_CREATOR_ROLES = [ADMIN_ROLE, OPERATIONS_ROLE] as const;
+/** 人工待办：管理员、运营、策划可新建（策划要把机会信号转成自己的选题待办）；所有业务角色都能勾选完成。 */
+export const TODO_CREATOR_ROLES = [ADMIN_ROLE, OPERATIONS_ROLE, PLANNER_ROLE] as const;
 
 export const canEditDeals = (roles: string[] | null | undefined): boolean =>
   hasAnyRole(roles, DEAL_EDITOR_ROLES);

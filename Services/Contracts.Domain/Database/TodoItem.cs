@@ -28,6 +28,12 @@ public class TodoItem : BaseEntity
     public string Href { get; set; } = "/";
 
     /// <summary>
+    /// 来源标识，用于「同一条信号只生成一次待办」的幂等判断。
+    /// 人工新建的待办为空；从首页信号生成的形如 signal:decline-&lt;accountId&gt;。
+    /// </summary>
+    public string SourceKey { get; set; } = string.Empty;
+
+    /// <summary>
     /// open / done。
     /// </summary>
     public string Status { get; set; } = TodoStatus.Open;

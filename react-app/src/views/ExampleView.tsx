@@ -8,11 +8,13 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import DashboardManager from '@/api/DashboardManager';
+import TodoManager from '@/api/TodoManager';
 import type { DashboardSignalDto, DashboardSummaryDto } from '@/api/AppDtos';
 import useAuthStore from '@/auth/AuthStore';
 import { formatCompactNumber } from '@/lib/format';
 import { getPlatformLabel } from '@/utils/platforms';
-import { canEditThresholds, canManageAccounts } from '@/utils/permissions';
+import { resolveErrorText } from '@/utils/errors';
+import { canCreateTodos, canEditThresholds, canManageAccounts } from '@/utils/permissions';
 import {
   ADMIN_ROLE,
   ANALYST_ROLE,
@@ -24,8 +26,8 @@ import {
   getRoleLabels,
   hasRole,
 } from '@/utils/roles';
-import { ArrowRight, CalendarRange, Flame, Siren } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { ArrowRight, CalendarRange, Flame, ListPlus, Siren } from 'lucide-react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 
 const workspaceTabs = [
@@ -156,6 +158,11 @@ const HomeView = () => {
   const [summaryStatus, setSummaryStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const [summaryReloadKey, setSummaryReloadKey] = useState(0);
 
+  // 信号卡片上的「转待办」：记录每条信号的处理状态，避免重复点击。
+  const [signalTodoState, setSignalTodoState] = useState<Record<string, 'pending' | 'done'>>({});
+  const [signalNotice, setSignalNotice] = useState<{ tone: 'success' | 'error'; text: string } | null>(null);
+  const canCreateTodo = canCreateTodos(roles);
+
   useEffect(() => {
     if (isTabPinned) return;
     setActiveTab(getDefaultTab(roleKey ? roleKey.split(',') : []));
@@ -227,6 +234,60 @@ const HomeView = () => {
   const hasExecution = Boolean(execution);
   // 计划页右栏只放由内容计划推导出来的提醒（缺方向 / 已过排期），不混入结算类待办。
   const planReminders = todoRows.filter((item) => item.Key.startsWith('auto-plan'));
+
+  const createTodoFromSignal = async (item: SignalView, kind: 'opportunity' | 'risk') => {
+    setSignalTodoState((prev) => ({ ...prev, [item.id]: 'pending' }));
+    setSignalNotice(null);
+
+    try {
+      const result = await TodoManager.SaveTodo({
+        // 机会交给策划定选题，风险交给运营排查；标题里带上触发值，待办列表一眼能认出是哪条信号。
+        Title: `${kind === 'risk' ? '风险跟进' : '机会跟进'}：${item.title} · ${item.signal}`,
+        OwnerRole: kind === 'risk' ? OPERATIONS_ROLE : PLANNER_ROLE,
+        Priority: item.tone === 'destructive' ? 'high' : 'normal',
+        Href: item.href,
+        SourceKey: `signal:${item.id}`,
+      });
+
+      if (!result.Success) {
+        setSignalNotice({ tone: 'error', text: result.Message || '生成待办失败。' });
+        setSignalTodoState((prev) => {
+          const next = { ...prev };
+          delete next[item.id];
+          return next;
+        });
+        return;
+      }
+
+      setSignalNotice({ tone: 'success', text: result.Message });
+      setSignalTodoState((prev) => ({ ...prev, [item.id]: 'done' }));
+      setSummaryReloadKey((value) => value + 1);
+    } catch (error) {
+      setSignalNotice({ tone: 'error', text: resolveErrorText(error, '生成待办失败，后端接口不可用。') });
+      setSignalTodoState((prev) => {
+        const next = { ...prev };
+        delete next[item.id];
+        return next;
+      });
+    }
+  };
+
+  const renderSignalAction = (item: SignalView, kind: 'opportunity' | 'risk') => {
+    if (!canCreateTodo) return null;
+    const state = signalTodoState[item.id];
+
+    return (
+      <Button
+        variant="outline"
+        size="sm"
+        disabled={state === 'pending' || state === 'done'}
+        onClick={() => createTodoFromSignal(item, kind)}
+      >
+        <ListPlus className="size-4" />
+        {state === 'done' ? '已转待办' : state === 'pending' ? '生成中…' : '转待办'}
+      </Button>
+    );
+  };
 
   return (
     <PageShell>
@@ -369,6 +430,21 @@ const HomeView = () => {
         </PanelBody>
       </Panel>
 
+      {signalNotice ? (
+        <div
+          className={`flex flex-wrap items-center justify-between gap-3 rounded-2xl px-4 py-3 text-sm leading-6 ${
+            signalNotice.tone === 'success'
+              ? 'border border-border/60 bg-muted/40 text-foreground'
+              : 'border border-destructive/30 bg-destructive/5 text-destructive'
+          }`}
+        >
+          <span>{signalNotice.text}</span>
+          <button type="button" className="text-xs underline underline-offset-4" onClick={() => setSignalNotice(null)}>
+            关闭
+          </button>
+        </div>
+      ) : null}
+
       <div className="grid gap-4 xl:grid-cols-2">
         <Panel>
           <PanelHeader
@@ -383,7 +459,9 @@ const HomeView = () => {
           />
           <PanelBody className="space-y-3">
             {opportunityViews.length > 0 ? (
-              opportunityViews.map((item) => <SignalRow key={item.id} {...item} />)
+              opportunityViews.map((item) => (
+                <SignalRow key={item.id} {...item} action={renderSignalAction(item, 'opportunity')} />
+              ))
             ) : (
               <p className="px-1 py-2 text-sm leading-6 text-muted-foreground">
                 区间内没有账号的单日播放达到自身日均的 2 倍。只有到达阈值的账号才会出现在这里，不做「疑似机会」的推测。
@@ -405,7 +483,9 @@ const HomeView = () => {
           />
           <PanelBody className="space-y-3">
             {riskViews.length > 0 ? (
-              riskViews.map((item) => <SignalRow key={item.id} {...item} />)
+              riskViews.map((item) => (
+                <SignalRow key={item.id} {...item} action={renderSignalAction(item, 'risk')} />
+              ))
             ) : (
               <p className="px-1 py-2 text-sm leading-6 text-muted-foreground">
                 没有账号触发掉速、互动偏低或缺数据规则。
@@ -660,13 +740,13 @@ const HomeView = () => {
   );
 };
 
-const SignalRow = ({ title, platform, signal, detail, tone, trace, href }: SignalView) => (
-  <Link
-    to={href}
-    className="block rounded-2xl border border-border/60 bg-background/60 px-5 py-4 transition-colors hover:bg-muted/60 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-  >
-    <div className="flex items-start justify-between gap-4">
-      <div className="space-y-1.5">
+const SignalRow = ({ title, platform, signal, detail, tone, trace, href, action }: SignalView & { action?: ReactNode }) => (
+  <div className="rounded-2xl border border-border/60 bg-background/60 transition-colors hover:bg-muted/60">
+    <div className="flex items-start justify-between gap-4 px-5 py-4">
+      <Link
+        to={href}
+        className="min-w-0 flex-1 space-y-1.5 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+      >
         <div className="flex flex-wrap items-center gap-2">
           <p className="font-medium tracking-tight">{title}</p>
           <StatusPill>{getPlatformLabel(platform)}</StatusPill>
@@ -674,10 +754,13 @@ const SignalRow = ({ title, platform, signal, detail, tone, trace, href }: Signa
         </div>
         <p className="text-sm text-muted-foreground">{detail}</p>
         <p className="text-[10px] leading-4 text-muted-foreground/80">{trace}</p>
+      </Link>
+      <div className="flex shrink-0 flex-col items-end gap-2">
+        <ArrowRight className="size-4 text-muted-foreground" />
+        {action}
       </div>
-      <ArrowRight className="mt-1 size-4 shrink-0 text-muted-foreground" />
     </div>
-  </Link>
+  </div>
 );
 
 const MetricTile = ({ label, value }: { label: string; value: string }) => (

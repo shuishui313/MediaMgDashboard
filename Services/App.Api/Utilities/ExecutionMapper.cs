@@ -98,6 +98,7 @@ namespace App.Api.Utilities
             Urgency = TodoText.Urgency(todo.DueDate, todo.Priority),
             Tone = TodoText.Tone(todo.DueDate, todo.Priority),
             Href = string.IsNullOrWhiteSpace(todo.Href) ? "/" : todo.Href,
+            SourceKey = todo.SourceKey ?? string.Empty,
             DueDate = todo.DueDate?.ToString("yyyy-MM-dd"),
             Status = todo.Status,
             CreatedBy = todo.CreatedBy,

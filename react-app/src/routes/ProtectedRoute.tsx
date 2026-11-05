@@ -38,9 +38,9 @@ const ProtectedRoute = ({ roles }: ProtectedRouteProps) => {
           AuthManager.GetSession({}),
           timeout,
         ]);
-      } catch (e: any) {
+      } catch (error) {
         if (!cancelled) {
-          setError(e?.message ?? 'Unable to restore your session.');
+          setError(error instanceof Error ? error.message : 'Unable to restore your session.');
         }
       } finally {
         window.clearTimeout(timeoutId);

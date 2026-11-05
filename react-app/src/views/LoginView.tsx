@@ -52,8 +52,10 @@ const LoginView = () => {
 
       setAuth(result.AccessToken, result.RefreshToken, result.Session);
       navigate(from, { replace: true });
-    } catch (e: any) {
-      const message = e?.message === 'Unauthorized' ? '邮箱或密码不正确。' : '无法连接服务，请确认后端已启动后重试。';
+    } catch (error) {
+      const message = error instanceof Error && error.message === 'Unauthorized'
+        ? '邮箱或密码不正确。'
+        : '无法连接服务，请确认后端已启动后重试。';
       setError(message);
     } finally {
       setSubmitting(false);

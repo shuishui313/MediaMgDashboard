@@ -1,13 +1,13 @@
 # HANDOFF
 
-> 交接文档 · 更新于 2026-11-03
-> 仓库：`shuishui313/MediaMgDashboard`（public，2026-11-03 从 `gsspai/mediaai` 迁入） · 分支 `main` · 工作区改动未提交（本轮操作审计）
+> 交接文档 · 更新于 2026-11-04
+> 仓库：`shuishui313/MediaMgDashboard`（public，2026-11-03 从 `gsspai/mediaai` 迁入） · 分支 `main` · 工作区改动未提交（本轮 CI + 信号转待办）
 
 ---
 
 ## 1. 当前进度
 
-最近几步：产品文档静态站点（`81ba382`）、认证闭环（`4100139`）、首页指标接真实接口（`3e1679c`）、账号与手工录入闭环（`65ea081`）、爆款机会 / 限流风险接真实计算、阈值可配 + CSV 批量导入（`8d43505`）、业务角色权限落地（`58be3ba`）、执行列表三块接真实接口（`55eba5b`）、**操作审计 + 仓库迁到 `shuishui313/MediaMgDashboard`（本轮，未提交）**。
+最近几步：产品文档静态站点（`81ba382`）、认证闭环（`4100139`）、首页指标接真实接口（`3e1679c`）、账号与手工录入闭环（`65ea081`）、爆款机会 / 限流风险接真实计算、阈值可配 + CSV 批量导入（`8d43505`）、业务角色权限落地（`58be3ba`）、执行列表三块接真实接口（`55eba5b`）、操作审计 + 仓库迁到 `shuishui313/MediaMgDashboard`（`3a1ab2b`）、**CI + 84 条后端单测 + 信号转跟进待办（本轮，未提交）**。
 
 已到达的状态：
 
@@ -22,7 +22,10 @@
 - 首页执行列表三块（商务单 / 内容计划 / 跨角色待办）与管理层概览来自 `Deal` / `ContentPlan` / `TodoItem` 三个文档，`/business`、`/business/:dealId`、`/plans`、`/plans/:planId` 四个页面均可用（新建、编辑、阶段推进/复核）。待办里的「自动」条目由单据状态推导，不落库。
 - 操作审计已落地：11 类写操作落 `AuditLog`（字段级前后值），`/settings` 底部可筛选、按天分组、展开看 diff；只保留 90 天，查询时自动清理。仅管理员可读。
 
-**未开始**：飞书免登、`RoleMappingConfig` / 用户组同步、平台 API 同步、飞书审批回写报价阶段、审计导出。`/connections/:platform` 仍是占位。
+- CI 工作流已写好但**尚未启用**：内容在 `docs/ci-workflow.yml`，待在 GitHub 网页端复制为 `.github/workflows/ci.yml`（见 2.14 的推送限制说明）。
+- 首页机会 / 风险信号可一键生成待办（风险给运营、机会给策划），`SourceKey` 保证同一条信号不重复建单。
+
+**未开始**：飞书免登、`RoleMappingConfig` / 用户组同步、平台 API 同步、飞书审批回写报价阶段、审计导出、三态组件统一。`/connections/:platform` 仍是占位。
 
 ---
 
@@ -32,7 +35,8 @@
 
 | 版本 | 时间 | 内容 |
 | --- | --- | --- |
-| （未提交） | 2026-11-03 | 操作审计（`AuditLog` + `AuditRecorder` + 设置页面板）；仓库迁到 `shuishui313/MediaMgDashboard` |
+| （未提交） | 2026-11-04 | CI、84 条后端单测、lint 存量清零、首页信号一键转待办（按 `SourceKey` 幂等） |
+| `3a1ab2b` | 2026-11-03 | 操作审计（`AuditLog` + `AuditRecorder` + 设置页面板）；仓库迁到 `shuishui313/MediaMgDashboard` |
 | `55eba5b` | 2026-10-28 | 执行列表接真实接口：`Deal` / `ContentPlan` / `TodoItem` + 三个 Manager + 四个页面；删除 `/analysis/:viewId` |
 | `58be3ba` | 2026-10-28 | 业务角色权限落地：`[RequireRole]`、403 中文原因、管理员引导、前端入口按角色显隐 |
 | `8d43505` | 2026-10-27 | CSV 批量导入（`MetricManager.ImportCsv`）与可配判定阈值（`/settings`）；作者邮箱改为 GitHub noreply |
@@ -298,6 +302,25 @@
 
 ---
 
+### 2.14 CI、单测与信号转跟进待办（本轮）
+
+代码：
+
+- `docs/ci-workflow.yml`（CI 模板）：`push main` / PR 触发，两个 job 并行。后端 `dotnet build Services/Services.sln -c Release` + `dotnet test App.Api.Tests`；前端 `npm ci` + `check-ts` + `vitest run` + `lint` + `build`。
+- `Services/App.Api.Tests/Tests/` 新增 6 个测试文件、84 条用例：商务单阶段机（跳级、倒退、终点、已丢失）、内容计划状态机、指标录入校验（日期 / 未来 / 过旧 / 负数 / 互动超播放）、阈值文案、审计标识与格式化、CSV 解析（BOM / 引号内逗号与换行 / 物理行号）。都是纯逻辑，不依赖数据库或凭据。
+- 清掉前端 23 个存量 lint error：`any` 改 `unknown`（`ApiClient` / `AppDtos` / `ProtectedRoute` / `LoginView` / `debounce` / `vite.config.ts`）、空接口改 `Record<string, never>`、移除未使用的 `SampleEnum`、给 vite 插件补 `Plugin` / `Connect` 类型、空 catch 加注释说明。
+- 信号转跟进：`TodoItem.SourceKey` + `SaveTodoRequestDto.SourceKey`；`TodoManager.SaveTodo` 在写入前查同来源未完成待办，命中就返回「已经在待办里了」不重复建单，角色放开到 `admin / operations / planner`。`TodoDto` 回传 `SourceKey`，审计摘要区分「手工新建」与「从首页信号生成待办」。
+- 前端 `ExampleView` 的信号卡片右侧加「转待办」按钮（仅上述三个角色可见）：风险 → 运营、机会 → 策划，`destructive` 风险设高优先级，标题带账号与触发值，成功后刷新总览并就地显示「已转待办」。
+
+验证：
+
+- `dotnet build` 0 错误、`dotnet test` 84/84、`tsc --noEmit` 0 错误、`vitest run` 17/17、`npm run build` 成功、`npm run lint` 0 error / 4 warning。
+- `/tmp/verify_signal_todo.py` 11/11：造 7 天指标触发掉速信号 → 访客建待办 403 → 策划角色生效且能转待办 → `SourceKey` 回传正确 → 同信号重复转换被幂等拦下且待办数不变 → 审计写入「从首页信号生成待办」。
+- **推送限制**：GitHub 拒绝 OAuth App 推送 `.github/workflows/*.yml`（`refusing to allow an OAuth App to create or update workflow ... without workflow scope`）。因此工作流以模板形式放在 `docs/ci-workflow.yml`，代码与单测照常推送；要启用 CI，在仓库网页端 Add file → Create new file，路径填 `.github/workflows/ci.yml`，把模板内容原样粘贴提交即可（网页端用的是你的账号权限）。或者改用带 `workflow` scope 的 PAT 推送该文件。
+- 说明：CI 工作流本身要等启用后在 GitHub Actions 页面看首次运行结果；本机没跑 Actions 运行环境。界面级点击验证未做（起常驻服务被 IDE 判定为长任务取消了两次），但类型、构建与接口链路均已覆盖。
+
+---
+
 ## 3. 遗留问题
 
 | # | 问题 | 影响 | 状态 |
@@ -312,8 +335,8 @@
 | 4d | 内容计划与待办没有删除 / 批量导入 | 录错了只能改状态（归档 / 完成），不能物理删除 | 待定 |
 | 4e | 审计记录只能在线看 | 没有导出 / 归档；保留期固定 90 天不可配；`AuditLog.json` 增长后每次查询会全量读（本地 JSON 实现） | 待定 |
 | 5 | ~~`/` 未挂 `ProtectedRoute`~~ | 已完成 | ✅ |
-| 6 | 无任何自动化测试与 CI | 改动靠人工验证 | 未规划 |
-| 6b | `npm run lint` 此前跑不起来（`eslint.config.js` 引 `typescript-eslint` 但依赖里没有），本轮补了 `typescript-eslint@8.1.0` 后恢复 | 存量 24 个 error（多为 `no-explicit-any`、`vite.config.ts` 空 block），本轮改动文件 0 error | 存量待清 |
+| 6 | ~~无任何自动化测试与 CI~~ | 已补 84 条后端单测、17 条前端单测与 GitHub Actions（见 2.14） | ✅ |
+| 6b | ~~lint 跑不起来 / 存量 error~~ | 依赖补齐，23 个存量 error 已清完，现在 0 error / 4 warning（shadcn 组件的 react-refresh 提示，不影响） | ✅ |
 | 7 | 推文文案只存在于对话中 | X / Facebook 两版成稿未落文件，若要发布需重新生成 | 未落地 |
 
 **待确认**：无阻塞项。下一批优先级见第 4 节。
@@ -338,6 +361,7 @@
 5. **飞书免登**：`/auth/feishu/callback` + 登录页飞书入口，与账号登录共用同一签发出口
 6. **`RoleMappingConfig`**（飞书用户组 → 角色，存库热改）+ `SyncDirectory` 定时同步，离职置 `Disabled`
 7. **`/connections/:platform`**：账号授权状态、同步失败重试、平台限额（当前仍是占位）
+8. **三态组件统一（M1-5）**：`LoadingSkeleton` / `EmptyState` / `ErrorState`，替换各页面手写的加载与空态文案
 
 产品文档给出的分期是 M0–M4、共 36 人日（M0 7.5 / M1 9 / M2 11.5 / M3 8），为估算值，大概率会超。
 

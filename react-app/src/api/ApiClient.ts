@@ -30,7 +30,7 @@ const invokeMethod = async <T>(
   serviceName: string,
   managerName: string,
   methodName: string,
-  params: any,
+  params: unknown,
   options?: ApiClientRequestOptions
 ): Promise<T> => {
   const apiUrl = import.meta.env.VITE_API_URL;
@@ -76,8 +76,8 @@ const streamMethod = async (
   serviceName: string,
   managerName: string,
   methodName: string,
-  params: any,
-  onData: (chunk: any) => void,
+  params: unknown,
+  onData: (chunk: unknown) => void,
   options?: ApiClientRequestOptions
 ) => {
   const apiUrl = import.meta.env.VITE_API_URL;

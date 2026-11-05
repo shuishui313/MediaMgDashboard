@@ -49,7 +49,7 @@ namespace App.Api.Managers
         /// <summary>
         /// 新增人工待办。自动待办不通过这里创建（它由底层单据推导）。
         /// </summary>
-        [RequireRole(Roles.Admin, Roles.Operations)]
+        [RequireRole(Roles.Admin, Roles.Operations, Roles.Planner)]
         public async Task<OperationResultDto> SaveTodo(SaveTodoRequestDto request)
         {
             if (request == null)
@@ -87,8 +87,27 @@ namespace App.Api.Managers
                 dueDate = parsed;
             }
 
+            // 从首页信号一键生成待办时，同一条未完成记录不再重复创建。
+            var sourceKey = (request.SourceKey ?? string.Empty).Trim();
+            if (sourceKey.Length > 0)
+            {
+                var existing = (await _databaseAccessor.GetAllDocuments<TodoItem>()).FirstOrDefault(item =>
+                    item.Status == TodoStatus.Open &&
+                    string.Equals(item.SourceKey, sourceKey, StringComparison.Ordinal));
+
+                if (existing != null)
+                {
+                    return new OperationResultDto
+                    {
+                        Success = true,
+                        Message = $"这条信号已经在待办里了：「{existing.Title}」，无需重复创建。"
+                    };
+                }
+            }
+
             var todo = new TodoItem
             {
+                SourceKey = sourceKey,
                 Title = title,
                 OwnerRole = ownerRole,
                 Priority = priority,
@@ -106,12 +125,15 @@ namespace App.Api.Managers
                 AuditTargetType.Todo,
                 todo.Id,
                 title,
-                $"新建待办「{title}」，负责角色「{RoleText.Label(ownerRole)}」。",
+                sourceKey.Length > 0
+                    ? $"从首页信号生成待办「{title}」，负责角色「{RoleText.Label(ownerRole)}」。"
+                    : $"新建待办「{title}」，负责角色「{RoleText.Label(ownerRole)}」。",
                 new[]
                 {
                     AuditText.NewChange("OwnerRole", "负责角色", "—", RoleText.Label(ownerRole)),
                     AuditText.NewChange("Priority", "优先级", "—", TodoPriority.Label(priority)),
-                    AuditText.NewChange("DueDate", "截止日", "—", AuditText.Date(dueDate))
+                    AuditText.NewChange("DueDate", "截止日", "—", AuditText.Date(dueDate)),
+                    AuditText.NewChange("SourceKey", "来源", "—", sourceKey.Length > 0 ? sourceKey : "手工新建")
                 });
 
             return new OperationResultDto { Success = true, Message = $"待办「{title}」已创建。" };

@@ -49,6 +49,8 @@ MediaAI 面向个人自媒体矩阵的日常运营：把多个平台账号的播
 | 角色化视图 | 已完成（前端） | 按角色决定默认执行列表，`admin` 额外展示管理层概览 |
 | 接口权限 | 已接入首批 | 阈值仅 `admin`，账号与指标写接口限 `admin` / `operations`；越权返回 403 + 中文原因，见[角色与权限](#角色与权限) |
 | 操作审计 | 已完成 | 11 类写操作落 `AuditLog`，`/settings` 可筛选、展开字段级 diff；仅管理员可读，保留 90 天 |
+| 信号转跟进 | 已完成 | 首页机会 / 风险卡片可一键生成待办，按 `SourceKey` 幂等去重；风险给运营、机会给策划 |
+| 持续集成 | 配置待启用 | 工作流内容在 `docs/ci-workflow.yml`；因 IDE 的 OAuth 凭据无 `workflow` 权限，需在 GitHub 网页端把它复制为 `.github/workflows/ci.yml` 才能自动跑：后端 build + 84 条单测、前端类型检查 / 17 条单测 / lint / 生产构建 |
 | 统一设计系统 | 已完成 | `PageShell` / `Panel` / `SectionHeader` / `StatusPill` / `TrendChart` / `SegmentedTabs` |
 | 产品文档 | 已发布（仓库迁移后需重新开启 Pages） | 目标地址 [shuishui313.github.io/MediaMgDashboard](https://shuishui313.github.io/MediaMgDashboard/)，含定位、角色、指标口径与验收标准 |
 | 平台连接页（`/connections`） | 已完成（手工 + CSV） | 账号增删改查、停用、手工录入日指标、CSV 批量导入、最近录入明细；`/connections/:platform` 仍是占位，OAuth 授权未接 |
@@ -218,7 +220,7 @@ POST /api/stream   → NDJSON 流式返回（方法返回 IAsyncEnumerable<T>）
 | `MetricDaily` | 每个账号每天的指标快照 | `AccountId`、`Platform`、`StatDate`、`Views` / `Likes` / `Comments` / `Shares`、`NewFollowers`、`Source`、`RecordedBy`、`RecordedAt` |
 | `Deal` | 商务合作单 | `ClientName`、`Title`、`Amount`、`Stage`、`OwnerName`、`OwnerAuthId`、`NextStep`、`ExpectedCloseAt`、`Notes`、`CreatedBy` |
 | `ContentPlan` | 内容计划 | `Title`、`Platforms`、`PlannedAt`、`Status`、`Direction`、`Score`、`AssigneeName`、`DealId`、`Link` |
-| `TodoItem` | 人工待办 | `Title`、`OwnerRole`、`Priority`、`DueDate`、`Href`、`Status`、`DoneAt`、`DoneBy` |
+| `TodoItem` | 人工待办 | `Title`、`OwnerRole`、`Priority`、`DueDate`、`Href`、`SourceKey`（来源幂等键）、`Status`、`DoneAt`、`DoneBy` |
 | `AuditLog` | 操作审计 | `At`、`ActorEmail` / `ActorAuthId`、`Action` / `ActionLabel`、`TargetType` / `TargetId` / `TargetLabel`、`Summary`、`Changes`（字段级前后值）、`Source`、`Detail` |
 
 - `MetricDaily.Source` 取 `api`（平台接口同步）/ `manual`（人工录入）/ `csv`（CSV 批量导入）/ `seed`（开发态种子），返回体里的 `DataSource` 会把四者计数摊开，界面直接显示「开发态示例数据 · 5 个账号 / 35 条日记录」「CSV 导入 12 条」这类文案。**新增数据入口时必须写入 `Source` 与 `RecordedBy`，否则数字无法回溯。**
@@ -296,6 +298,16 @@ POST /api/stream   → NDJSON 流式返回（方法返回 IAsyncEnumerable<T>）
 | 有内容计划 `scheduled` 且排期日已过 | N 条内容计划已过排期仍未发布 | 运营 |
 
 开发态种子数据由 `Utilities/ExecutionSeeder.cs` 写入（4 条商务单 / 4 条内容计划 / 2 条人工待办，`CreatedBy = seed:development`），界面打「示例」标记，`Execution.SourceLabel` 会写明「含开发态示例数据」。重置：删掉本地数据目录下的 `Deal.json`、`ContentPlan.json`、`TodoItem.json`。
+
+### 信号转跟进待办
+
+首页「爆款机会 / 限流风险」的每条信号右侧有「转待办」按钮（管理员 / 运营 / 策划可见），点一下就进入跨角色待办，完成「发现异常 → 有人处理」的闭环：
+
+- 标题带上账号名与触发值，例如 `风险跟进：微博 · 主号 · -42%`
+- 风险交给 `operations`，机会交给 `planner`；`destructive` 级别的风险自动设为高优先级
+- 请求带 `SourceKey = signal:<信号 Key>`；后端发现同来源还有未完成待办时直接返回「已经在待办里了」，不重复建单
+- 生成动作同样写进审计（`todo.create`，摘要标注「从首页信号生成待办」）
+- 自动待办（由商务单 / 内容计划推导）不参与这个流程：条件修好后它们会自己消失，不需要人工勾选
 
 ### 操作审计
 
@@ -466,6 +478,7 @@ git status --ignored --short | grep -E "\.env|appsettings"
 3. **后端数据骨架**：新增 `DashboardManager` + DTO（平台走势、KPI、机会/风险、待办、合作单摘要），工作台改为通过 `ApiClient` 拉取并删除 mock 常量。（`GetSummary` 已覆盖全部区块，首页不再有 mock 常量）
    - 机会/风险阈值已可配：`/settings` 改完保存即生效，规则文案与首页同源（`SignalPolicyText`）。
    - ~~执行列表（商务 / 计划 / 待办）与管理层概览~~ — 已接 `DealManager` / `ContentPlanManager` / `TodoManager`（见「执行列表」一节）。
+   - ~~机会 / 风险只展示不跟进~~ — 已支持一键转待办（见「信号转跟进待办」）。
 4. **详情页落地**：`/business/:dealId`、`/plans/:planId` 已实现；剩余 `/connections/:platform`（授权状态、同步失败重试）。
 
 ### P1 — 让页面「可用、可信」

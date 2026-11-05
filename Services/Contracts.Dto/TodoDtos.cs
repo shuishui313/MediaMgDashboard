@@ -39,6 +39,11 @@ public class TodoDto
 
     public string Href { get; set; } = "/";
 
+    /// <summary>
+    /// 来源标识，人工待办为空；从首页信号生成的形如 signal:decline-&lt;accountId&gt;。
+    /// </summary>
+    public string SourceKey { get; set; } = string.Empty;
+
     public string? DueDate { get; set; }
 
     public string Status { get; set; } = "open";
@@ -88,4 +93,9 @@ public class SaveTodoRequestDto
     public string? DueDate { get; set; }
 
     public string Href { get; set; } = "/";
+
+    /// <summary>
+    /// 来源标识（可选）。传了就按它做幂等：同一条未完成的来源记录不会重复创建。
+    /// </summary>
+    public string? SourceKey { get; set; }
 }

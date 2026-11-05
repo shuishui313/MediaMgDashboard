@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# 同一分支的新推送取消上一次未跑完的构建，PR 上尤其省时间。
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: 后端构建与单测
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: 还原依赖
+        run: dotnet restore Services/Services.sln
+
+      - name: 构建
+        run: dotnet build Services/Services.sln --no-restore -c Release
+
+      - name: 单测
+        # 只跑纯逻辑单测，不需要数据库 / 飞书凭据。
+        run: dotnet test Services/App.Api.Tests/App.Api.Tests.csproj --no-build -c Release --logger "console;verbosity=normal"
+
+  frontend:
+    name: 前端类型、单测与构建
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: react-app
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: react-app/package-lock.json
+
+      - name: 安装依赖
+        run: npm ci
+
+      - name: 类型检查
+        run: npm run check-ts
+
+      - name: 单测
+        run: npx vitest run --mode test
+
+      - name: Lint
+        run: npm run lint
+
+      - name: 生产构建
+        run: npm run build
