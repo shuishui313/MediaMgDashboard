@@ -27,7 +27,7 @@
 - 首页机会 / 风险信号可一键生成待办（风险给运营、机会给策划），`SourceKey` 保证同一条信号不重复建单。
 - 中英文 README 双文件维护（`README.md` / `README.en.md`），改状态口径时两份要同步；合并远端 `dd8196f` 时是 fast-forward，无 Git 冲突，但两个文件开头的「前端原型阶段」描述与状态表矛盾，已统一改为「主链路已跑通、飞书与平台同步未接」。
 
-**未开始**：飞书免登、`RoleMappingConfig` / 用户组同步、平台 API 同步、飞书审批回写报价阶段、审计导出、三态组件统一。`/connections/:platform` 仍是占位。
+**未开始**：飞书免登、`RoleMappingConfig` / 用户组同步、平台 API 同步、飞书审批回写报价阶段、审计导出。`/connections/:platform` 仍是占位。
 
 ---
 
@@ -371,7 +371,7 @@
 5. **飞书免登**：`/auth/feishu/callback` + 登录页飞书入口，与账号登录共用同一签发出口
 6. **`RoleMappingConfig`**（飞书用户组 → 角色，存库热改）+ `SyncDirectory` 定时同步，离职置 `Disabled`
 7. **`/connections/:platform`**：账号授权状态、同步失败重试、平台限额（当前仍是占位）
-8. **三态组件统一（M1-5）**：`LoadingSkeleton` / `EmptyState` / `ErrorState`，替换各页面手写的加载与空态文案
+8. ~~**三态组件统一（M1-5）**：`LoadingSkeleton` / `EmptyState` / `ErrorState`，替换各页面手写的加载与空态文案~~ — 已完成：三个组件落在 `components/dashboard/`，首页、列表页、详情页、设置页、审计面板、平台连接页与 `TrendChart` 的手写三态已替换，错误文案统一走 `resolveErrorText`。
 
 产品文档给出的分期是 M0–M4、共 36 人日（M0 7.5 / M1 9 / M2 11.5 / M3 8），为估算值，大概率会超。
 

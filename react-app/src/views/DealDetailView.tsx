@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, RefreshCw } from 'lucide-react';
+import { ArrowLeft, ArrowRight } from 'lucide-react';
+import ErrorState from '@/components/dashboard/ErrorState';
+import LoadingSkeleton from '@/components/dashboard/LoadingSkeleton';
 import PageShell from '@/components/dashboard/PageShell';
 import { Panel, PanelBody, PanelHeader } from '@/components/dashboard/Panel';
 import StatusPill, { type StatusTone } from '@/components/dashboard/StatusPill';
@@ -91,7 +93,9 @@ const DealDetailView = () => {
     return (
       <PageShell>
         <Panel>
-          <PanelBody className="py-10 text-sm text-muted-foreground">正在加载商务单…</PanelBody>
+          <PanelBody className="py-10">
+            <LoadingSkeleton count={3} variant="row" label="正在加载商务单…" />
+          </PanelBody>
         </Panel>
       </PageShell>
     );
@@ -103,21 +107,20 @@ const DealDetailView = () => {
         <Panel>
           <PanelHeader eyebrow="商务合作" title="详情不可用" actions={<StatusPill tone="warning">未找到</StatusPill>} />
           <PanelBody className="space-y-4">
-            <p className="text-sm leading-7 text-muted-foreground">
-              {status === 'missing'
-                ? '这张商务单不存在，或者链接里的 ID 不对。'
-                : '商务单没有加载成功，稍后重试或检查后端接口。'}
-            </p>
+            <ErrorState
+              message={
+                status === 'missing'
+                  ? '这张商务单不存在，或者链接里的 ID 不对。'
+                  : '商务单没有加载成功，稍后重试或检查后端接口。'
+              }
+              onRetry={() => setReloadKey((value) => value + 1)}
+            />
             <div className="flex flex-wrap gap-3">
               <Button variant="outline" asChild>
                 <Link to="/business">
                   <ArrowLeft className="size-4" />
                   返回商务单列表
                 </Link>
-              </Button>
-              <Button variant="ghost" onClick={() => setReloadKey((value) => value + 1)}>
-                <RefreshCw className="size-4" />
-                重试
               </Button>
             </div>
           </PanelBody>

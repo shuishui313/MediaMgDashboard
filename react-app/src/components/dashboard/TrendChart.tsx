@@ -1,3 +1,4 @@
+import EmptyState from '@/components/dashboard/EmptyState';
 import { formatCompactNumber } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
@@ -39,9 +40,14 @@ const toPolyline = (points: { x: number; y: number }[]) =>
 const TrendChart = ({ points, platform, className }: { points: TrendPoint[]; platform: string; className?: string }) => {
   if (points.length === 0) {
     return (
-      <div className={cn('flex h-40 items-center justify-center rounded-2xl border border-dashed border-border/70 text-sm text-muted-foreground', className)}>
-        暂无更新数据
-      </div>
+      <EmptyState
+        compact
+        title="暂无更新数据"
+        className={cn(
+          'flex h-40 flex-col items-center justify-center rounded-2xl border border-dashed border-border/70 bg-background/60',
+          className,
+        )}
+      />
     );
   }
 

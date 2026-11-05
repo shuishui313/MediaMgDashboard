@@ -440,7 +440,7 @@ POST /api/stream   → NDJSON 流式返回（方法返回 IAsyncEnumerable<T>）
 3. **数字格式**：统一使用 `formatCompactNumber()`（`万` / `千`），表格与指标使用 `tabular-nums`；不要在页面里混用 `k`、`w`、`万`。
 4. **标题层级**：区块标题必须用 `SectionHeader`（`h2`）；页面主标题用 `h1`；不要用 `CardDescription` 充当小标题。
 5. **不重复展示同一指标**：指标卡、图表、图例各自承担不同信息（数值 / 走势 / 颜色映射）。
-6. **状态齐全**：新增异步区域时同时提供 loading（骨架）、empty、error 三态；当前原型尚未接入接口，`TrendChart` 内先提供空数据态示例。
+6. **状态齐全**：新增异步区域时同时提供 loading（骨架）、empty、error 三态，统一复用 `react-app/src/components/dashboard/` 下的 `LoadingSkeleton` / `EmptyState` / `ErrorState`；无权限态走 `/unauthorized`。
 7. **可访问性**：可点击区域使用 `Link` / `Button`，保证 `focus-visible` 可见；图表必须带 `role="img"` 与 `aria-label`。
 
 ---
@@ -500,7 +500,7 @@ git status --ignored --short | grep -E "\.env|appsettings"
 
 ### P1 — 让页面「可用、可信」
 
-5. **状态与反馈**：统一 loading 骨架、空数据、错误重试、无权限四态组件。
+5. ~~**状态与反馈**：统一 loading 骨架、空数据、错误重试组件~~ — 已完成（三态见「设计系统与 UI 规范」；无权限态走 `/unauthorized`）。
 6. **图表交互**：时间范围（5 条 / 周 / 月）切换、hover 数值、平台筛选；把归一化说明放进图例旁。
 7. **平台连接**：账号授权状态、同步任务与失败重试、限流告警，对应首页「同步异常」指标。
 

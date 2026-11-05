@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Link2, RefreshCw, Save, SlidersHorizontal } from 'lucide-react';
 import AuditLogPanel from '@/components/dashboard/AuditLogPanel';
+import ErrorState from '@/components/dashboard/ErrorState';
+import LoadingSkeleton from '@/components/dashboard/LoadingSkeleton';
 import PageShell from '@/components/dashboard/PageShell';
 import { Panel, PanelBody, PanelHeader } from '@/components/dashboard/Panel';
 import StatusPill from '@/components/dashboard/StatusPill';
@@ -211,14 +213,7 @@ const SettingsView = () => {
         </PanelBody>
       </Panel>
 
-      {error ? (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm leading-6 text-destructive">
-          <span>{error}</span>
-          <button type="button" className="text-xs underline" onClick={() => setError(null)}>
-            关闭
-          </button>
-        </div>
-      ) : null}
+      {error ? <ErrorState message={error} onDismiss={() => setError(null)} /> : null}
 
       {feedback ? (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border/60 bg-muted/40 px-4 py-3 text-sm leading-6">
@@ -233,11 +228,7 @@ const SettingsView = () => {
         <PanelHeader eyebrow="阈值" title="判定参数" description="五项都必填，超出范围的输入后端会直接拒绝并说明原因，不会静默截断。" />
         <PanelBody>
           {status === 'loading' && !values ? (
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {Array.from({ length: 5 }).map((_, index) => (
-                <div key={index} className="h-24 animate-pulse rounded-2xl border border-border/60 bg-muted/40" />
-              ))}
-            </div>
+            <LoadingSkeleton count={5} variant="row" layout="grid" label="正在读取阈值…" />
           ) : null}
 
           {values ? (

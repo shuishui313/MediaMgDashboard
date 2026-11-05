@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, FileDown, Link2, Pencil, Plus, RefreshCw, Save, Upload } from 'lucide-react';
+import EmptyState from '@/components/dashboard/EmptyState';
+import ErrorState from '@/components/dashboard/ErrorState';
+import LoadingSkeleton from '@/components/dashboard/LoadingSkeleton';
 import PageShell from '@/components/dashboard/PageShell';
 import { Panel, PanelBody, PanelHeader } from '@/components/dashboard/Panel';
 import StatusPill, { type StatusTone } from '@/components/dashboard/StatusPill';
@@ -441,34 +444,35 @@ const ConnectionsView = () => {
       ) : null}
 
       {accountsStatus === 'error' ? (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm leading-6 text-destructive">
-          <span>账号列表加载失败。停用或错填的账号请不要继续录入，先确认后端可用。</span>
-          <Button variant="outline" size="sm" onClick={reload}>
-            重试
-          </Button>
-        </div>
+        <ErrorState
+          message="账号列表加载失败。停用或错填的账号请不要继续录入，先确认后端可用。"
+          onRetry={reload}
+        />
+      ) : null}
+
+      {accountsStatus === 'loading' ? (
+        <LoadingSkeleton count={3} variant="card" layout="grid" label="正在加载平台账号…" />
       ) : null}
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {accountsStatus === 'loading'
-          ? Array.from({ length: 3 }).map((_, index) => (
-              <div key={index} className="h-44 animate-pulse rounded-3xl border border-border/60 bg-muted/40" />
-            ))
-          : null}
-
         {accountsStatus === 'ready' && accounts.length === 0 ? (
-          <div className="rounded-3xl border border-dashed border-border/70 bg-background/60 px-6 py-10 text-center md:col-span-2 xl:col-span-3">
-            <p className="text-sm font-medium">还没有任何平台账号</p>
-            <p className="mt-2 text-sm text-muted-foreground">
-              {canEdit ? '先新增一个账号，再录入它今天的播放与互动数据。' : '当前账号为只读，等管理员或运营添加账号后再查看。'}
-            </p>
-            {canEdit ? (
-              <Button className="mt-4" size="sm" onClick={openCreateAccount}>
-                <Plus className="size-4" />
-                新增账号
-              </Button>
-            ) : null}
-          </div>
+          <EmptyState
+            title="还没有任何平台账号"
+            description={
+              canEdit
+                ? '先新增一个账号，再录入它今天的播放与互动数据。'
+                : '当前账号为只读，等管理员或运营添加账号后再查看。'
+            }
+            action={
+              canEdit ? (
+                <Button size="sm" onClick={openCreateAccount}>
+                  <Plus className="size-4" />
+                  新增账号
+                </Button>
+              ) : null
+            }
+            className="md:col-span-2 xl:col-span-3"
+          />
         ) : null}
 
         {accounts.map((account) => {
@@ -541,11 +545,15 @@ const ConnectionsView = () => {
         />
         <PanelBody className="overflow-x-auto p-0">
           {entriesStatus === 'error' ? (
-            <div className="px-6 py-5 text-sm text-destructive">日记录加载失败，请点击上方「刷新」重试。</div>
+            <ErrorState
+              message="日记录加载失败，请点击上方「刷新」重试。"
+              onRetry={reload}
+              className="m-4"
+            />
           ) : null}
 
           {entriesStatus === 'ready' && entries.length === 0 ? (
-            <div className="px-6 py-8 text-sm text-muted-foreground">还没有任何日记录。</div>
+            <EmptyState compact title="还没有任何日记录。" className="py-8" />
           ) : null}
 
           {entries.length > 0 ? (

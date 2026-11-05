@@ -440,7 +440,7 @@ Conventions:
 3. **Numbers**: use `formatCompactNumber()` (`万` / `千`). Tables and metrics use `tabular-nums`. Do not mix `k`, `w`, and `万` on a page.
 4. **Headings**: section titles use `SectionHeader` (`h2`). The page title uses `h1`. Do not use `CardDescription` as a subheading.
 5. **Do not repeat the same metric**: the metric card, the chart, and the legend each carry a different fact (value / trend / color key).
-6. **Complete states**: a new async region provides loading (skeleton), empty, and error. The prototype is not fully on the API yet; `TrendChart` includes an empty-data example for now.
+6. **Complete states**: a new async region provides loading (skeleton), empty, and error. Reuse `LoadingSkeleton` / `EmptyState` / `ErrorState` from `react-app/src/components/dashboard/`; the no-permission case routes to `/unauthorized`.
 7. **Accessibility**: clickable regions use `Link` / `Button` with a visible `focus-visible` ring. Charts need `role="img"` and `aria-label`.
 
 ---
@@ -495,7 +495,7 @@ Pages charges for private repositories. This repository is public, and Pages is 
 
 ### P1 — Make the pages usable and trustworthy
 
-5. **States and feedback.** Shared loading skeleton, empty, error-retry, and no-permission states.
+5. ~~**States and feedback.** Shared loading skeleton, empty, and error-retry states.~~ — Done. The three shared states live in `components/dashboard/`; no-permission routes to `/unauthorized`.
 6. **Chart interaction.** Range switch (5 points / week / month), hover values, platform filter, and a normalization note next to the legend.
 7. **Platform connections.** Authorization status, sync jobs, failure retry, and throttling alerts, matching the home “sync error” metric.
 

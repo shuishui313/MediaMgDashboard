@@ -1,4 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import EmptyState from '@/components/dashboard/EmptyState';
+import ErrorState from '@/components/dashboard/ErrorState';
+import LoadingSkeleton from '@/components/dashboard/LoadingSkeleton';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Pencil, Plus, RefreshCw } from 'lucide-react';
 import PageShell from '@/components/dashboard/PageShell';
@@ -196,12 +199,6 @@ const BusinessView = () => {
     }
   };
 
-  const emptyHint = useMemo(() => {
-    if (status === 'loading') return '正在加载商务单…';
-    if (status === 'error') return '商务单没有加载成功，稍后重试或检查后端接口。';
-    return '没有符合条件的商务单。';
-  }, [status]);
-
   return (
     <PageShell>
       <SectionHeader
@@ -351,8 +348,17 @@ const BusinessView = () => {
               ))
             ) : (
               <TableRow className="border-border/50 hover:bg-transparent">
-                <TableCell colSpan={7} className="px-6 py-6 text-sm leading-6 text-muted-foreground">
-                  {emptyHint}
+                <TableCell colSpan={7} className="px-6 py-6">
+                  {status === 'loading' ? (
+                    <LoadingSkeleton count={3} variant="row" label="正在加载商务单…" />
+                  ) : status === 'error' ? (
+                    <ErrorState
+                      message="商务单没有加载成功，稍后重试或检查后端接口。"
+                      onRetry={() => setReloadKey((value) => value + 1)}
+                    />
+                  ) : (
+                    <EmptyState compact title="没有符合条件的商务单。" />
+                  )}
                 </TableCell>
               </TableRow>
             )}

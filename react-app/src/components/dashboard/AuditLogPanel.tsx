@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ChevronDown, ChevronRight, RefreshCw } from 'lucide-react';
+import EmptyState from '@/components/dashboard/EmptyState';
+import ErrorState from '@/components/dashboard/ErrorState';
+import LoadingSkeleton from '@/components/dashboard/LoadingSkeleton';
 import { Panel, PanelBody, PanelHeader } from '@/components/dashboard/Panel';
 import StatusPill, { type StatusTone } from '@/components/dashboard/StatusPill';
 import { Button } from '@/components/ui/button';
@@ -189,26 +192,27 @@ const AuditLogPanel = () => {
         </div>
 
         {error ? (
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm leading-6 text-destructive">
-            <span>{error}</span>
-            <button type="button" className="text-xs underline" onClick={() => setError(null)}>
-              关闭
-            </button>
-          </div>
+          <ErrorState
+            message={error}
+            onRetry={() => setReloadKey((value) => value + 1)}
+            onDismiss={() => setError(null)}
+          />
         ) : null}
 
         {status === 'loading' ? (
-          <div className="space-y-2">
-            {Array.from({ length: 4 }).map((_, index) => (
-              <div key={index} className="h-16 animate-pulse rounded-2xl border border-border/60 bg-muted/40" />
-            ))}
-          </div>
+          <LoadingSkeleton count={4} variant="row" label="正在加载审计记录…" />
         ) : null}
 
         {status === 'ready' && items.length === 0 ? (
-          <p className="px-1 py-3 text-sm leading-6 text-muted-foreground">
-            {hasFilter ? '没有符合筛选条件的写操作。' : '还没有任何写操作记录。改一次阈值、建一个账号或推进一次阶段就会出现在这里。'}
-          </p>
+          <EmptyState
+            compact
+            title={hasFilter ? '没有符合筛选条件的写操作。' : '还没有任何写操作记录。'}
+            description={
+              hasFilter
+                ? '换个筛选条件再看看。'
+                : '改一次阈值、建一个账号或推进一次阶段就会出现在这里。'
+            }
+          />
         ) : null}
 
         {items.length > 0 ? (

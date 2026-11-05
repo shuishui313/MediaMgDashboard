@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, ExternalLink, RefreshCw } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ExternalLink } from 'lucide-react';
+import ErrorState from '@/components/dashboard/ErrorState';
+import LoadingSkeleton from '@/components/dashboard/LoadingSkeleton';
 import PageShell from '@/components/dashboard/PageShell';
 import { Panel, PanelBody, PanelHeader } from '@/components/dashboard/Panel';
 import StatusPill, { type StatusTone } from '@/components/dashboard/StatusPill';
@@ -82,7 +84,9 @@ const PlanDetailView = () => {
     return (
       <PageShell>
         <Panel>
-          <PanelBody className="py-10 text-sm text-muted-foreground">正在加载内容计划…</PanelBody>
+          <PanelBody className="py-10">
+            <LoadingSkeleton count={3} variant="row" label="正在加载内容计划…" />
+          </PanelBody>
         </Panel>
       </PageShell>
     );
@@ -94,19 +98,20 @@ const PlanDetailView = () => {
         <Panel>
           <PanelHeader eyebrow="内容计划" title="详情不可用" actions={<StatusPill tone="warning">未找到</StatusPill>} />
           <PanelBody className="space-y-4">
-            <p className="text-sm leading-7 text-muted-foreground">
-              {status === 'missing' ? '这条内容计划不存在，或者链接里的 ID 不对。' : '内容计划没有加载成功，稍后重试。'}
-            </p>
+            <ErrorState
+              message={
+                status === 'missing'
+                  ? '这条内容计划不存在，或者链接里的 ID 不对。'
+                  : '内容计划没有加载成功，稍后重试。'
+              }
+              onRetry={() => setReloadKey((value) => value + 1)}
+            />
             <div className="flex flex-wrap gap-3">
               <Button variant="outline" asChild>
                 <Link to="/plans">
                   <ArrowLeft className="size-4" />
                   返回内容计划
                 </Link>
-              </Button>
-              <Button variant="ghost" onClick={() => setReloadKey((value) => value + 1)}>
-                <RefreshCw className="size-4" />
-                重试
               </Button>
             </div>
           </PanelBody>

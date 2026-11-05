@@ -1,3 +1,4 @@
+import EmptyState from '@/components/dashboard/EmptyState';
 import PageShell from '@/components/dashboard/PageShell';
 import { Panel, PanelBody, PanelHeader } from '@/components/dashboard/Panel';
 import SectionHeader from '@/components/dashboard/SectionHeader';
@@ -463,9 +464,11 @@ const HomeView = () => {
                 <SignalRow key={item.id} {...item} action={renderSignalAction(item, 'opportunity')} />
               ))
             ) : (
-              <p className="px-1 py-2 text-sm leading-6 text-muted-foreground">
-                区间内没有账号的单日播放达到自身日均的 2 倍。只有到达阈值的账号才会出现在这里，不做「疑似机会」的推测。
-              </p>
+              <EmptyState
+                compact
+                title="区间内没有达标的账号。"
+                description="只有单日播放达到自身日均 2 倍的账号才会出现在这里，不做「疑似机会」的推测。"
+              />
             )}
           </PanelBody>
         </Panel>
@@ -487,9 +490,7 @@ const HomeView = () => {
                 <SignalRow key={item.id} {...item} action={renderSignalAction(item, 'risk')} />
               ))
             ) : (
-              <p className="px-1 py-2 text-sm leading-6 text-muted-foreground">
-                没有账号触发掉速、互动偏低或缺数据规则。
-              </p>
+              <EmptyState compact title="没有账号触发掉速、互动偏低或缺数据规则。" />
             )}
           </PanelBody>
         </Panel>
@@ -600,10 +601,16 @@ const HomeView = () => {
                   ))
                 ) : (
                   <TableRow className="border-border/50 hover:bg-transparent">
-                    <TableCell colSpan={5} className="px-6 py-6 text-sm leading-6 text-muted-foreground">
-                      {hasExecution
-                        ? '没有推进中的商务单。新建后这里会显示待报价审核、待制作等需要处理的事项。'
-                        : '执行列表没有加载成功，稍后重试或检查后端接口。'}
+                    <TableCell colSpan={5} className="px-6 py-6">
+                      <EmptyState
+                        compact
+                        title={hasExecution ? '没有推进中的商务单。' : '执行列表没有加载成功。'}
+                        description={
+                          hasExecution
+                            ? '新建后这里会显示待报价审核、待制作等需要处理的事项。'
+                            : '稍后重试或检查后端接口。'
+                        }
+                      />
                     </TableCell>
                   </TableRow>
                 )}
@@ -663,8 +670,12 @@ const HomeView = () => {
                     ))
                   ) : (
                     <TableRow className="border-border/50 hover:bg-transparent">
-                      <TableCell colSpan={5} className="px-6 py-6 text-sm leading-6 text-muted-foreground">
-                        {hasExecution ? '没有未归档的内容计划。' : '执行列表没有加载成功，稍后重试或检查后端接口。'}
+                      <TableCell colSpan={5} className="px-6 py-6">
+                        <EmptyState
+                          compact
+                          title={hasExecution ? '没有未归档的内容计划。' : '执行列表没有加载成功。'}
+                          description={hasExecution ? undefined : '稍后重试或检查后端接口。'}
+                        />
                       </TableCell>
                     </TableRow>
                   )}
@@ -687,9 +698,10 @@ const HomeView = () => {
                     </Link>
                   ))
                 ) : (
-                  <p className="px-1 py-2 text-sm leading-6 text-muted-foreground">
-                    {hasExecution ? '没有待补方向或已逾期未发布的计划。' : '执行列表没有加载成功。'}
-                  </p>
+                  <EmptyState
+                    compact
+                    title={hasExecution ? '没有待补方向或已逾期未发布的计划。' : '执行列表没有加载成功。'}
+                  />
                 )}
               </PanelBody>
             </Panel>
@@ -728,9 +740,11 @@ const HomeView = () => {
                   </Link>
                 ))
               ) : (
-                <p className="px-1 py-2 text-sm leading-6 text-muted-foreground">
-                  {hasExecution ? '没有未完成的待办。' : '执行列表没有加载成功，稍后重试或检查后端接口。'}
-                </p>
+                <EmptyState
+                  compact
+                  title={hasExecution ? '没有未完成的待办。' : '执行列表没有加载成功。'}
+                  description={hasExecution ? undefined : '稍后重试或检查后端接口。'}
+                />
               )}
             </PanelBody>
           </Panel>
