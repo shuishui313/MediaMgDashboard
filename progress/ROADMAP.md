@@ -2,7 +2,7 @@
 
 「全部实现」= 下表全部勾选。飞书应用凭据、平台开放平台资质、Supabase 生产连接串属于外部条件，代码以可配置占位 + 单测覆盖，真实联调由用户提供凭据后单独进行，不计入自动完成范围。`docs/declined.md` 明确不做的项不在本表。
 
-每天一轮：取第一个未完成项，在 box 的 `~/project` 用 shell 落地，跑全套测试，写 `progress/<日期>.md`，提交到 `cloud-dev`。
+每天一轮：取第一个未完成项，在 box 的 `~/project` 用 shell 落地，跑全套测试，写 `progress/<日期>.md` 并重写 `HANDOFF.md` 第 0 节，提交到 `cloud-dev`。
 
 - [x] T01 `/connections/:platform` 平台明细页（账号状态、粉丝规模、最近录入、来源、三态）— 2026-11-08
 - [ ] T02 图表交互：7 / 14 / 30 天时间范围切换
@@ -39,5 +39,6 @@
 2. 用 shell 读 `progress/ROADMAP.md` 与最近一篇日志，取下一项。
 3. 所有写入用 `cat > 文件 <<'EOF'` / `sed` / `patch`，写完 `cat` 确认。
 4. 跑 `npm run check-ts`、`npx vitest run --mode test`、`npm run lint`、`npm run build`、`dotnet build`、`dotnet test`。
-5. 写日志，`git add` 明确列出文件（不含 `run.log`），`git commit`，`git push origin cloud-dev`。
-6. 报告改动文件、测试结果、下一步。
+5. 写 `progress/<日期>.md` 日志，**重写 `HANDOFF.md` 第 0 节**（模板与最少字段见 §0），写完 `cat` 确认。
+6. `git add` 明确列出文件（不含 `run.log`），`git commit`，`git push origin cloud-dev`，不动 `main`。
+7. 报告改动文件、测试结果、下一步。

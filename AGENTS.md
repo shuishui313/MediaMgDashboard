@@ -14,8 +14,17 @@ This file applies only to `shuishui313/MediaMgDashboard`. ruflo is not this proj
   Mark links to Chinese-only deep docs with `(in Chinese)`. The two ServiceInvoker notes are English and do not get the marker.
 - 已采纳的决定写在 [docs/decisions.md](docs/decisions.md)，明确不做的写在 [docs/declined.md](docs/declined.md)。
   Accepted decisions and declined work live in those two files.
-- 完成度按 README 现在的写法。开篇是「主链路已跑通」，并点名尚未接入的飞书免登、飞书审批、平台 API 自动同步、`/connections/:platform`。不要把已经删掉的「前端原型阶段 / 页面数据仍为前端 mock / 后端仅认证骨架」写回去。「当前状态」下面要分清两类：KPI / 信号仅在 `GetSummary` 整个失败时降级为带「静态示例数据」标记的兜底卡片；执行列表三个 Tab 与管理层概览来自 `GetSummary().Execution`，没有演示数据、失败时显示空态。没有对应 Issue，不要编造编号。
+- 完成度按 README 现在的写法。开篇是「主链路已跑通」，并点名尚未接入的飞书免登、飞书审批、平台 API 自动同步（含同步失败重试）。`/connections/:platform` 已于 2026-11-08 落地为平台明细页，不要再写成占位。不要把已经删掉的「前端原型阶段 / 页面数据仍为前端 mock / 后端仅认证骨架」写回去。「当前状态」下面要分清两类：KPI / 信号仅在 `GetSummary` 整个失败时降级为带「静态示例数据」标记的兜底卡片；执行列表三个 Tab 与管理层概览来自 `GetSummary().Execution`，没有演示数据、失败时显示空态。没有对应 Issue，不要编造编号。
   Status follows the README as it stands: the opening says the main path is wired and names what is still open. Do not restore the deleted “frontend prototype / page data is still mock / auth skeleton only” sentence. Under Current status keep two cases distinct: KPI / signal blocks fall back to labelled “static sample data” only when `GetSummary` fails entirely, while the three execution tabs and the management overview read `GetSummary().Execution`, have no demo data, and show empty states on failure. Do not invent issue numbers.
+
+## 交接 / Handoff
+
+- 每轮（每天一次）结束必须重写 `HANDOFF.md` 顶部「## 0. 最新一轮交接」，只保留最新一轮；上一轮的明细留在 `progress/<日期>.md`，不要在 §0 堆叠。
+  Every round rewrites the top section of HANDOFF.md with only the latest round; earlier details stay in progress/<date>.md.
+- §0 最少写清：日期与轮次、分支与提交 / 远端、运行环境（box 路径、tmux、端口、凭据）、改动文件、测试结果、卡点、下一轮第一件事与接手命令、本轮遵守的规则。写不全等于没交接。
+  Section 0 must state at least: date/round, branch/commits/remote, environment, changed files, test results, blockers, the next task with handoff commands, and the rules in force.
+- 明细日志写 `progress/<日期>.md`，清单写 `progress/ROADMAP.md`；`docs/` 由 Pages 从 `main` 公开，不要放草稿或未定稿内容。
+  Keep per-round logs and the roadmap under progress/. docs/ is published by Pages; no drafts there.
 
 ## 角色常量 / Roles
 

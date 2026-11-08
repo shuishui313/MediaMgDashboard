@@ -1,7 +1,72 @@
 # HANDOFF
 
-> 交接文档 · 更新于 2026-11-05
-> 仓库：`shuishui313/MediaMgDashboard`（public，2026-11-03 从 `gsspai/mediaai` 迁入） · 分支 `main` · 工作区改动待提交（本轮 CI / Pages 启用后的文档同步）
+> 交接文档 · 更新于 2026-11-08（每轮更新，最新一轮见第 0 节）
+> 仓库：`shuishui313/MediaMgDashboard`（public，2026-11-03 从 `gsspai/mediaai` 迁入） · 当前工作分支 `cloud-dev`（不动 `main`） · box 云电脑 `~/project`，工作区干净
+> 第 2 节及以后是 2026-11-05 的历史记录，描述当时状态；当前状态以第 0 节与 README 为准。
+
+---
+
+## 0. 最新一轮交接（每轮必更新，置顶）
+
+> 每轮结束必须重写本节，只保留最新一轮；上一轮的明细留在 `progress/<日期>.md`，不要在这里堆叠。本节是下一轮（可能换了会话 / 模型 / 机器）唯一的接手入口，写不全就等于没交接。
+>
+> 最少必写：日期与轮次 · 分支与提交 / 远端 · 运行环境与凭据 · 改动文件 · 测试结果 · 卡点 · 下一轮第一件事与接手命令 · 本轮遵守的规则。
+
+### 2026-11-08 · 第 1 轮
+
+| 项 | 值 |
+| --- | --- |
+| 分支 / 提交 | `cloud-dev`，本轮功能 `b4c687a`、日志 `225ecf2`，交接文档提交以 `git log -1` 为准（文档提交不改代码）；`main` = `37e9de2`，**未改动** |
+| 远端 | `origin` = `shuishui313/MediaMgDashboard`，`cloud-dev` 已 push；PR 入口 `https://github.com/shuishui313/MediaMgDashboard/pull/new/cloud-dev` |
+| 工作区 | box 云电脑 `~/project`，`git status` 干净；`run.log` 已被 `.gitignore` 排除 |
+| 清单 / 日志 | `progress/ROADMAP.md`（28 项，T01 已完成）、`progress/2026-11-08.md` |
+
+**运行环境**
+
+- 所有操作只在 box 云电脑 `~/project`，通过 box `shell` 完成。本机文件与终端一律不碰，禁止本地文件编辑工具与本地终端。
+- .NET SDK 8.0.418 在 `~/.dotnet`（命令前 `export PATH="$HOME/.dotnet:$PATH"`），`npm ci` / `dotnet restore` 已完成。
+- tmux：`mediaai-api`（`http://localhost:5123`，Development + 本地 JSON，不连 Supabase）、`mediaai-web`（`http://localhost:3000`）；日志 `~/project/run.log`。重启时两个会话都要重新起，别只起一个。
+- GitHub CLI 已 `gh auth login --web` + `gh auth setup-git`，凭据在 `~/.config/gh/hosts.yml`，`git push` 可用。网页登录只给浏览器 cookie，不解决 CLI 推送。
+- 开发态账号 / 阈值 / 审计数据都在本地 JSON，不要用 Production 配置，也不要把 `appsettings.*.local.json` 入库。
+
+**本轮改动文件**
+
+- 新增 `react-app/src/views/PlatformDetailView.tsx`、`react-app/src/utils/platformDetail.ts`、`react-app/src/utils/platformDetail.test.ts`（5 条用例）
+- 修改 `react-app/src/routes/Routes.tsx`、`README.md`、`README.en.md`（同步 6 处完成度）、`.gitignore`（忽略 `run.log`）
+- 删除 `react-app/src/views/WorkspaceDetailPlaceholderView.tsx`
+- 新增 `progress/ROADMAP.md`、`progress/2026-11-08.md`
+- 本轮补写 `HANDOFF.md` 第 0 节，并把「每轮写 HANDOFF」写进 `AGENTS.md` 与 `progress/ROADMAP.md`
+
+**测试结果**（全部在 box 上跑）
+
+| 检查 | 结果 |
+| --- | --- |
+| `npm run check-ts` | 0 error |
+| `npx vitest run --mode test` | 3 文件 / 22 条全通过（原 17 + 新 5） |
+| `npm run lint` | 0 error，4 个既有 `components/ui/*` react-refresh warning |
+| `npm run build` | 成功 |
+| `dotnet build Services/Services.sln -c Release` | 0 error（2 条 Marten NU1904 历史告警） |
+| `dotnet test` | 84 / 84 通过 |
+| 探活 | `api /api/health`、`web /`、`web /connections/douyin` 均 200；vite watcher `Found 0 errors` |
+
+**卡点与处理**
+
+- 首次 `git push` 因 box 无 CLI 凭据失败（`could not read Username`）；已在 box 上完成设备授权与 `gh auth setup-git`，推送成功。
+- 删除占位文件时 vite HMR 短暂报 `File ... not found`，路由替换后恢复 0 error，不是遗留问题。
+- 飞书 / 平台开放平台 / Supabase 真实联调仍需外部凭据（T14–T18、T25），代码侧先做可配置骨架。
+- `AGENTS.md` 里「IDE OAuth 凭据无 `workflow` scope、不能改 `.github/workflows/*`」仍适用于本机；box 的 gh token 有 `repo` scope，但也不要擅自改工作流。
+
+**下一轮第一件事**
+
+- T02 图表时间范围切换（7 / 14 / 30 天）与平台筛选，见 `progress/ROADMAP.md`。
+- 接手命令：
+
+```bash
+cd ~/project && git status -sb && git log --oneline -3 && tmux ls && cat progress/ROADMAP.md
+```
+
+- 每轮固定动作见 `progress/ROADMAP.md`「每轮固定动作」：写完 `cat` 确认 → 全套测试 → 写 `progress/<日期>.md` → **重写本文件第 0 节** → `git commit` → `git push origin cloud-dev`，不动 `main`。
+- 模型：需要在 CodeBuddy IDE 里把会话 / 自动化任务的模型选成 **HY4**；自动化创建接口不带 `model` 参数，不要猜测模型标识。
 
 ---
 
@@ -27,7 +92,7 @@
 - 首页机会 / 风险信号可一键生成待办（风险给运营、机会给策划），`SourceKey` 保证同一条信号不重复建单。
 - 中英文 README 双文件维护（`README.md` / `README.en.md`），改状态口径时两份要同步；合并远端 `dd8196f` 时是 fast-forward，无 Git 冲突，但两个文件开头的「前端原型阶段」描述与状态表矛盾，已统一改为「主链路已跑通、飞书与平台同步未接」。
 
-**未开始**：飞书免登、`RoleMappingConfig` / 用户组同步、平台 API 同步、飞书审批回写报价阶段、审计导出。`/connections/:platform` 仍是占位。
+**未开始**：飞书免登、`RoleMappingConfig` / 用户组同步、平台 API 同步、飞书审批回写报价阶段、审计导出。`/connections/:platform` 已于 2026-11-08 在 `cloud-dev` 落地为平台明细页（见第 0 节）；账号授权状态与同步失败重试随平台 API 同步接入。
 
 ---
 
@@ -370,7 +435,7 @@
 4. ~~**操作审计**：`AuditLog` 记录阈值、账号、指标、商务单阶段变更（谁、何时、前后值），设置页 / 详情页可查~~ — 已完成（见 2.13）；导出与保留期配置未做
 5. **飞书免登**：`/auth/feishu/callback` + 登录页飞书入口，与账号登录共用同一签发出口
 6. **`RoleMappingConfig`**（飞书用户组 → 角色，存库热改）+ `SyncDirectory` 定时同步，离职置 `Disabled`
-7. **`/connections/:platform`**：账号授权状态、同步失败重试、平台限额（当前仍是占位）
+7. **`/connections/:platform`**：平台明细页已完成（见第 0 节）；剩余账号授权状态、同步失败重试、平台限额，随平台 API 同步接入
 8. ~~**三态组件统一（M1-5）**：`LoadingSkeleton` / `EmptyState` / `ErrorState`，替换各页面手写的加载与空态文案~~ — 已完成：三个组件落在 `components/dashboard/`，首页、列表页、详情页、设置页、审计面板、平台连接页与 `TrendChart` 的手写三态已替换，错误文案统一走 `resolveErrorText`。
 
 产品文档给出的分期是 M0–M4、共 36 人日（M0 7.5 / M1 9 / M2 11.5 / M3 8），为估算值，大概率会超。
@@ -401,7 +466,8 @@
 
 - 预览服务：在 `docs/` 下跑 `python3 -m http.server 4174`，访问 `http://localhost:4174/product-overview.html`。**该进程可能仍在后台运行**，端口冲突时先 `lsof -ti:4174 | xargs kill`。
 - 无头截图 / 布局度量：`/Applications/Google Chrome.app/Contents/MacOS/Google Chrome --headless=new --dump-dom`，配合同源 iframe 探针可读取 `scrollWidth` 实测溢出（探针文件用完即删）。
-- 推送凭据由 IDE 临时注入，**不可用于 GitHub Settings API**；机器上无 gh CLI token、无钥匙串凭据、无 `GITHUB_TOKEN`、无 `~/.netrc`。需要改仓库设置时只能人工操作。
+- 推送凭据由 IDE 临时注入，**不可用于 GitHub Settings API**；机器上无 gh CLI token、无钥匙串凭据、无 `GITHUB_TOKEN`、无 `~/.netrc`。需要改仓库设置时只能人工操作。**以下描述只适用于本机，不适用于 box。**
+- **box 云电脑（2026-11-08 起所有操作都在这里）**：项目在 `~/project`，分支 `cloud-dev`；.NET SDK 8.0.418 装在 `~/.dotnet`，命令前 `export PATH="$HOME/.dotnet:$PATH"`。tmux 会话 `mediaai-api`（`ASPNETCORE_ENVIRONMENT=Development`，`http://localhost:5123`）与 `mediaai-web`（`VITE_API_URL=http://localhost:5123`，`http://localhost:3000`），日志追加到 `~/project/run.log`。GitHub CLI 已 `gh auth login --web` + `gh auth setup-git`，`git push` 可用；网页登录 GitHub 不等于 CLI 凭据，重登后要确认 `gh auth status`。
 - 改完后端不想打扰正在跑的 `https://localhost:5123`：用 `dotnet run --no-build --urls https://localhost:5124` 起一个独立实例验证，验完 kill 掉。前端 `react-app/.env` 的 `VITE_API_URL` 指向验证实例时，**验完必须改回 5123**。
 - 重置开发态种子数据：删掉本地数据目录下 `PlatformAccount.json` 与 `MetricDaily.json`（路径含 `AppConfiguration__AppName`，默认 `~/CodeBuddy/Resources/MediaAI/` 附近），重启后端即重新生成 5 个账号 × 7 天。
 - **做写操作验证时隔离数据目录**：`AppConfiguration__AppName=MediaAI-Smoke dotnet run --no-build --urls https://localhost:5126`，数据落在 `~/CodeBuddy/Resources/MediaAI-Smoke/`，不会污染用户 5123 实例的数据。新目录里没有用户，要先调 `AuthManager.SignUp` 再登录。
@@ -427,3 +493,5 @@
 - **注意**：`npm run test` 是 watch 模式（`vitest --mode test`），非交互环境下会一直挂住，请用 `npx vitest run --mode test`。
 - **注意**：验证脚本里的统计日期必须落在 `GetSummary` 的窗口内（`Days` 默认 7，`today-1` 起算最稳），否则 `DataSource.Label` 会显示「区间内暂无数据」，看着像导入失败。
 - 本机 `dotnet` 曾被系统判为签名失效（进程 SIGKILL），修复方式：`codesign --force --sign - /Users/shuishui/Tools/dotnet/dotnet`。生产环境启动会连 Supabase，本机网络不可达，验证一律用 `ASPNETCORE_ENVIRONMENT=Development`（`LocalAuthAccessor` + 本地 JSON）。
+
+- **2026-11-08（box / `cloud-dev`）**：`npm run check-ts` 0 error；`npx vitest run --mode test` 3 文件 / 22 条；`npm run lint` 0 error / 4 个既有 warning；`npm run build` 成功；`dotnet build -c Release` 0 error（2 条 Marten NU1904）；`dotnet test` 84/84；API 5123 与前端 3000 探活 200，新路由 `/connections/douyin` 200。明细见第 0 节。
