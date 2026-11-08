@@ -10,7 +10,7 @@ import PlansView from '@/views/PlansView';
 import ProtectedRoute from '@/routes/ProtectedRoute';
 import SettingsView from '@/views/SettingsView';
 import UnauthorizedView from '@/views/UnauthorizedView';
-import WorkspaceDetailPlaceholderView from '@/views/WorkspaceDetailPlaceholderView';
+import PlatformDetailView from '@/views/PlatformDetailView';
 import { ADMIN_ROLE } from '@/utils/roles';
 
 /**
@@ -34,7 +34,7 @@ const AppRoutes = () => {
           <Route path="/plans" element={<PlansView />} />
           <Route path="/plans/:planId" element={<PlanDetailView />} />
           <Route path="/connections" element={<ConnectionsView />} />
-          <Route path="/connections/:platform" element={<WorkspaceDetailPlaceholderView />} />
+          <Route path="/connections/:platform" element={<PlatformDetailView />} />
         </Route>
 
         {/* 判定阈值属于管理层面板，按权限矩阵只对管理员开放；其他角色落到 /unauthorized。 */}

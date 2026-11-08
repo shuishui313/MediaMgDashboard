@@ -4,7 +4,7 @@ MediaMgDashboard (formerly MediaAI) is the daily ops workbench for a personal me
 
 Positioning, roles, metric definitions, and screen structure are specified in the [product docs](https://shuishui313.github.io/MediaMgDashboard/) (in Chinese).
 
-The main path is wired end to end: login and role permissions, platform accounts and daily metrics (including CSV import), live opportunity / risk detection, deals and content plans, execution lists and cross-role todos, and the audit log. All data comes from backend APIs. The home page shows labelled “static sample data” fallback cards only when `GetSummary` fails entirely; the execution lists and management overview have no mock fallback and show empty states instead. Development data lives in local JSON. Feishu SSO, Feishu approval callbacks, automated platform API sync, and the `/connections/:platform` detail page are still open.
+The main path is wired end to end: login and role permissions, platform accounts and daily metrics (including CSV import), live opportunity / risk detection, deals and content plans, execution lists and cross-role todos, and the audit log. All data comes from backend APIs. The home page shows labelled “static sample data” fallback cards only when `GetSummary` fails entirely; the execution lists and management overview have no mock fallback and show empty states instead. Development data lives in local JSON. Feishu SSO, Feishu approval callbacks, and automated platform API sync (including retry after a failed sync) are still open. `/connections/:platform` now shows a platform detail page with account status, follower totals, recent entries and their sources; authorization status and sync retry arrive with platform API sync.
 
 [中文](README.md) | **English**
 
@@ -58,9 +58,9 @@ On 2026-11-03 the repository moved to **`shuishui313/MediaMgDashboard`** (the ol
 | Continuous integration | Enabled (first run passed) | `.github/workflows/ci.yml` runs backend build + 84 unit tests and frontend typecheck / 17 unit tests / lint / production build. The template stays in sync in `docs/ci-workflow.yml`; [see the runs](https://github.com/shuishui313/MediaMgDashboard/actions) |
 | Shared design system | Done | `PageShell` / `Panel` / `SectionHeader` / `StatusPill` / `TrendChart` / `SegmentedTabs` |
 | Product docs | Published | [shuishui313.github.io/MediaMgDashboard](https://shuishui313.github.io/MediaMgDashboard/) (in Chinese), covering positioning, roles, metric definitions, and acceptance criteria. Pages is enabled on the new repo from `main` / `/docs` |
-| Platform connections (`/connections`) | Done (manual + CSV) | Account CRUD, disable, manual daily metrics, CSV bulk import, and recent entries. `/connections/:platform` is still a placeholder. OAuth is not wired |
+| Platform connections (`/connections`) | Done (manual + CSV) | Account CRUD, disable, manual daily metrics, CSV bulk import, and recent entries. `/connections/:platform` now shows a platform detail page (account status, recent entries). OAuth is not wired |
 | Deals and plans | Done (no approval flow) | `/business`, `/business/:dealId`, `/plans`, and `/plans/:planId` use live data. Quote approval is still moved by hand. Feishu approval is not wired |
-| Detail pages | Partial | `/connections/:platform` is still a placeholder. `/settings` implements threshold configuration. `/analysis/:viewId` has been removed |
+| Detail pages | Done | `/connections/:platform` shows platform details. `/settings` implements threshold configuration. `/analysis/:viewId` has been removed |
 | Auth API | Skeleton usable | `AuthManager` exposes 8 methods (login, register, password change, session, and related). Feishu SSO is not wired |
 | Dashboard API | Usable | `DashboardManager.GetSummary` (KPIs, platform trend, opportunity / risk signals, three execution lists, management overview, data source). `PlatformAccountManager`, `MetricManager`, `DealManager`, `ContentPlanManager`, and `TodoManager` are in place. Analytics Managers are not |
 | Data model | In place | `PlatformAccount`, `MetricDaily` (including `Source` / `RecordedBy`), `Deal`, `ContentPlan`, `TodoItem` (manual todos) |
@@ -75,7 +75,7 @@ On 2026-11-03 the repository moved to **`shuishui313/MediaMgDashboard`** (the ol
 
 These bullets only repeat limits this README already states. The repository has no Issues for them, so this list does not invent issue numbers. How to treat the gap is in [docs/decisions.md](docs/decisions.md).
 
-- **The main path is wired. These are not.** Login and role permissions, platform accounts and daily metrics (including CSV), live opportunity / risk detection, deals and content plans, execution lists and cross-role todos, and the audit log come from backend APIs. The execution lists and management overview have no mock fallback. Development data lives in local JSON. Still open: Feishu SSO, Feishu approval, automated platform API sync, and the `/connections/:platform` detail page.
+- **The main path is wired. These are not.** Login and role permissions, platform accounts and daily metrics (including CSV), live opportunity / risk detection, deals and content plans, execution lists and cross-role todos, and the audit log come from backend APIs. The execution lists and management overview have no mock fallback. Development data lives in local JSON. Still open: Feishu SSO, Feishu approval, and automated platform API sync (including retry after a failed sync). `/connections/:platform` now shows account status, follower totals and recent entries.
 - **Do not put “frontend prototype / page data is still mock” back.** That opening was removed because it contradicted the status table. Under Current status, keep two cases distinct: when the API fails entirely, KPI and signal blocks degrade to labelled “static sample data” fallback cards; the three execution tabs and the management overview read `GetSummary().Execution`, have no demo data, and show empty states on failure.
 - **Only accounts with the `workflow` scope can edit the CI file.** `.github/workflows/ci.yml` was created in the GitHub UI on 2026-11-05 and its first run passed. The IDE OAuth credential lacks that scope, so it cannot push or modify this path. Edit CI in the web UI, or change `docs/ci-workflow.yml` and copy it over.
 
@@ -411,7 +411,7 @@ The product docs define 6 pages (`/login`, `/`, `/business`, `/plans`, `/connect
 | `/plans` | Content plan list | Implemented (filter, create / edit) |
 | `/plans/:planId` | Content plan detail | Implemented (status timeline, advance / archive, linked deal) |
 | `/connections` | Platform connection list | Implemented (account management + manual entry + CSV import) |
-| `/connections/:platform` | Platform connection detail | Placeholder |
+| `/connections/:platform` | Platform connection detail | Done (account status / recent entries) |
 | `/settings` | Settings (thresholds, default view, notification channels) | Thresholds implemented. Default view and notification channels are not |
 | `/unauthorized` | No permission | Shared copy and styling |
 | `*` | 404 | Shared copy and styling |
@@ -491,7 +491,7 @@ Pages charges for private repositories. This repository is public, and Pages is 
 1. **Feishu SSO.** Add a Feishu entry beside password login and a `/auth/feishu/callback` route. `FeishuManager.ExchangeCode` exchanges the code for `open_id` and issues this system's JWT. Feishu credentials stay in `Feishu__*` environment variables; the Feishu token is not sent to the browser. Password login and `ProtectedRoute` are done.
 2. **Align roles.** Add `RoleMappingConfig` (Feishu user group → role) and a `SyncDirectory` job that marks departed users `Disabled`. `[RequireRole(...)]` is already on Settings and on account / metric writes; remaining write APIs get it as they land.
 3. **Backend data skeleton.** `DashboardManager.GetSummary` already covers every home block. The execution lists and management overview no longer keep mock constants; KPI, trend, and signal blocks still have labelled “static sample data” fallback cards for a failed API call. Opportunity / risk thresholds are editable on `/settings` and apply on save; rule copy shares `SignalPolicyText` with the home page. The execution list and the management overview are backed by `DealManager` / `ContentPlanManager` / `TodoManager`. Opportunities and risks can be turned into todos in one click.
-4. **Detail pages.** `/business/:dealId` and `/plans/:planId` are done. Still open: `/connections/:platform` (authorization status, retry after a failed sync).
+4. **Detail pages.** `/business/:dealId`, `/plans/:planId` and `/connections/:platform` (account status, follower totals, recent entries) are done. Authorization status and sync retry arrive with automated platform API sync.
 
 ### P1 — Make the pages usable and trustworthy
 

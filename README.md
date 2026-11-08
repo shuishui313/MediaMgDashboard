@@ -4,7 +4,7 @@ MediaAI 面向个人自媒体矩阵的日常运营：把多个平台账号的播
 
 定位、角色、指标口径与界面结构的完整说明见[产品文档](https://shuishui313.github.io/MediaMgDashboard/)。
 
-主链路已跑通：登录与角色权限、平台账号与日指标录入（含 CSV 导入）、机会 / 风险实时判定、商务单与内容计划、执行列表与跨角色待办、操作审计，数据均由后端接口返回。首页仅在 `GetSummary` 整个失败时显示带「静态示例数据」标记的兜底卡片；执行列表与管理层概览没有 mock 兜底，失败时显示空态。开发态数据存本地 JSON；飞书免登、飞书审批、平台 API 自动同步与 `/connections/:platform` 详情页尚未接入。
+主链路已跑通：登录与角色权限、平台账号与日指标录入（含 CSV 导入）、机会 / 风险实时判定、商务单与内容计划、执行列表与跨角色待办、操作审计，数据均由后端接口返回。首页仅在 `GetSummary` 整个失败时显示带「静态示例数据」标记的兜底卡片；执行列表与管理层概览没有 mock 兜底，失败时显示空态。开发态数据存本地 JSON；飞书免登、飞书审批与平台 API 自动同步（含同步失败重试）尚未接入。`/connections/:platform` 已落地为平台明细页（账号状态、粉丝规模、最近录入与来源），授权状态与失败重试随平台 API 同步接入。
 
 **中文** | [English](README.en.md)
 
@@ -58,9 +58,9 @@ MediaAI 面向个人自媒体矩阵的日常运营：把多个平台账号的播
 | 持续集成 | 已启用（首次运行通过） | `.github/workflows/ci.yml`：后端 build + 84 条单测、前端类型检查 / 17 条单测 / lint / 生产构建；模板同步保存在 `docs/ci-workflow.yml`，[查看运行记录](https://github.com/shuishui313/MediaMgDashboard/actions) |
 | 统一设计系统 | 已完成 | `PageShell` / `Panel` / `SectionHeader` / `StatusPill` / `TrendChart` / `SegmentedTabs` |
 | 产品文档 | 已发布 | [shuishui313.github.io/MediaMgDashboard](https://shuishui313.github.io/MediaMgDashboard/)，含定位、角色、指标口径与验收标准；Pages 已在新仓库开启，`main` / `/docs` |
-| 平台连接页（`/connections`） | 已完成（手工 + CSV） | 账号增删改查、停用、手工录入日指标、CSV 批量导入、最近录入明细；`/connections/:platform` 仍是占位，OAuth 授权未接 |
+| 平台连接页（`/connections`） | 已完成（手工 + CSV） | 账号增删改查、停用、手工录入日指标、CSV 批量导入、最近录入明细；`/connections/:platform` 已提供平台明细（账号状态、最近录入），OAuth 授权未接 |
 | 商务与计划页 | 已完成（无审批流） | `/business`、`/business/:dealId`、`/plans`、`/plans/:planId` 均为真实数据；报价审批仍靠人工推进，未接飞书审批 |
-| 详情页 | 部分 | `/connections/:platform` 仍是占位；`/settings` 已实现阈值配置；`/analysis/:viewId` 已移除 |
+| 详情页 | 已完成 | `/connections/:platform` 已实现平台明细；`/settings` 已实现阈值配置；`/analysis/:viewId` 已移除 |
 | 认证接口 | 骨架可用 | `AuthManager` 提供登录、注册、改密、会话等 8 个方法；飞书免登未接入 |
 | 看板接口 | 可用 | `DashboardManager.GetSummary`（KPI、平台走势、机会 / 风险信号、执行列表三块、管理层概览、数据来源）；`PlatformAccountManager`、`MetricManager`、`DealManager`、`ContentPlanManager`、`TodoManager` 均已落地；分析类 Manager 未建 |
 | 数据模型 | 已建立 | `PlatformAccount`、`MetricDaily`（含 `Source` / `RecordedBy`）、`Deal`（商务单）、`ContentPlan`（内容计划）、`TodoItem`（人工待办） |
@@ -75,7 +75,7 @@ MediaAI 面向个人自媒体矩阵的日常运营：把多个平台账号的播
 
 下面只复述本文已经写过的边界。仓库里还没有对应的 Issue，这里不编造编号。怎么对待这几条，见 [docs/decisions.md](docs/decisions.md)。
 
-- **主链路已跑通，这几项还没接。** 登录与角色权限、平台账号与日指标（含 CSV）、机会 / 风险实时判定、商务单与内容计划、执行列表与跨角色待办、操作审计，数据由后端接口返回；执行列表与管理层概览没有 mock 兜底。开发态数据存本地 JSON。尚未接入：飞书免登、飞书审批、平台 API 自动同步、`/connections/:platform` 详情页。
+- **主链路已跑通，这几项还没接。** 登录与角色权限、平台账号与日指标（含 CSV）、机会 / 风险实时判定、商务单与内容计划、执行列表与跨角色待办、操作审计，数据由后端接口返回；执行列表与管理层概览没有 mock 兜底。开发态数据存本地 JSON。尚未接入：飞书免登、飞书审批、平台 API 自动同步（含同步失败重试）。`/connections/:platform` 已提供账号状态、粉丝规模与最近录入明细。
 - **不要把「前端原型 / 页面仍是 mock」写回去。** 这句开篇已经删掉，因为它和状态表矛盾。「当前状态」下面要分清两类：接口完全不可用时 KPI 与信号显式降级为带「静态示例数据」标记的兜底卡片；执行列表三个 Tab 与管理层概览已接 `GetSummary().Execution`，没有演示数据，失败时显示空态。
 - **CI 工作流文件只能由有 `workflow` 权限的账号改。** `.github/workflows/ci.yml` 已于 2026-11-05 在 GitHub 网页端创建并首次运行通过；IDE 注入的 OAuth 凭据只有 `repo` 等 scope，不能推送或修改该文件。改 CI 规则请在网页端编辑，或先改 `docs/ci-workflow.yml` 再复制过去。
 
@@ -411,7 +411,7 @@ POST /api/stream   → NDJSON 流式返回（方法返回 IAsyncEnumerable<T>）
 | `/plans` | 内容计划列表 | 已实现（筛选、新建 / 编辑） |
 | `/plans/:planId` | 内容计划详情 | 已实现（状态时间线、推进 / 归档、关联商务单） |
 | `/connections` | 平台连接列表 | 已实现（账号管理 + 手工录入 + CSV 导入） |
-| `/connections/:platform` | 平台连接详情 | 占位 |
+| `/connections/:platform` | 平台连接详情 | 已实现（账号状态 / 最近录入） |
 | `/settings` | 设置（阈值、默认视图、通知渠道） | 已实现阈值配置；默认视图、通知渠道未做 |
 | `/unauthorized` | 无权限 | 已统一文案与样式 |
 | `*` | 404 | 已统一文案与样式 |
@@ -496,7 +496,7 @@ git status --ignored --short | grep -E "\.env|appsettings"
    - 机会/风险阈值已可配：`/settings` 改完保存即生效，规则文案与首页同源（`SignalPolicyText`）。
    - ~~执行列表（商务 / 计划 / 待办）与管理层概览~~ — 已接 `DealManager` / `ContentPlanManager` / `TodoManager`（见「执行列表」一节）。
    - ~~机会 / 风险只展示不跟进~~ — 已支持一键转待办（见「信号转跟进待办」）。
-4. **详情页落地**：`/business/:dealId`、`/plans/:planId` 已实现；剩余 `/connections/:platform`（授权状态、同步失败重试）。
+4. **详情页落地**：`/business/:dealId`、`/plans/:planId` 与 `/connections/:platform`（账号状态、粉丝规模、最近录入）已实现；授权状态与同步失败重试随平台 API 自动同步接入。
 
 ### P1 — 让页面「可用、可信」
 
