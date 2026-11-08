@@ -15,6 +15,14 @@ import useAuthStore from '@/auth/AuthStore';
 import { formatCompactNumber } from '@/lib/format';
 import { getPlatformLabel } from '@/utils/platforms';
 import { resolveErrorText } from '@/utils/errors';
+import {
+  RANGE_OPTIONS,
+  buildPlatformOptions,
+  filterTrendsByPlatform,
+  sampleTrendPoints,
+  toDays,
+  type RangeDays,
+} from '@/utils/dashboardRange';
 import { canCreateTodos, canEditThresholds, canManageAccounts } from '@/utils/permissions';
 import {
   ADMIN_ROLE,
@@ -158,6 +166,8 @@ const HomeView = () => {
   const [summary, setSummary] = useState<DashboardSummaryDto | null>(null);
   const [summaryStatus, setSummaryStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const [summaryReloadKey, setSummaryReloadKey] = useState(0);
+  const [rangeDays, setRangeDays] = useState<RangeDays>('7');
+  const [platformFilter, setPlatformFilter] = useState('all');
 
   // 信号卡片上的「转待办」：记录每条信号的处理状态，避免重复点击。
   const [signalTodoState, setSignalTodoState] = useState<Record<string, 'pending' | 'done'>>({});
@@ -173,7 +183,7 @@ const HomeView = () => {
     let cancelled = false;
     setSummaryStatus('loading');
 
-    DashboardManager.GetSummary({ Days: 7 })
+    DashboardManager.GetSummary({ Days: toDays(rangeDays) })
       .then((data) => {
         if (cancelled) return;
         setSummary(data);
@@ -187,7 +197,7 @@ const HomeView = () => {
     return () => {
       cancelled = true;
     };
-  }, [summaryReloadKey]);
+  }, [summaryReloadKey, rangeDays]);
 
   const metricViews: MetricCardView[] = summary
     ? summary.Kpis.map((kpi) => ({
@@ -203,24 +213,40 @@ const HomeView = () => {
       }))
     : fallbackMetricCards;
 
-  const trendViews = summary
+  // 时间范围走后端 Days；平台筛选与点数采样只在展示层做，后端聚合口径不随筛选变化。
+  const allTrendViews = summary
     ? summary.PlatformTrends.map((trend) => ({
-        platform: getPlatformLabel(trend.Platform),
+        platformKey: trend.Platform,
+        platformLabel: getPlatformLabel(trend.Platform),
         tone: (trend.Tone as StatusTone) ?? 'info',
         changeRate: trend.ChangeRate,
-        points: trend.Points.slice(-5).map((point) => ({
-          label: point.Label,
-          views: point.Views,
-          comments: point.Comments,
-          shares: point.Shares,
-        })),
+        points: sampleTrendPoints(
+          trend.Points.map((point) => ({
+            label: point.Label,
+            views: point.Views,
+            comments: point.Comments,
+            shares: point.Shares,
+          })),
+          10,
+        ),
       }))
     : fallbackPlatformSeries.map((item) => ({
-        platform: item.platform,
+        platformKey: item.platform,
+        platformLabel: item.platform,
         tone: item.tone,
         changeRate: changeRate(item.points),
-        points: item.points,
+        points: sampleTrendPoints(item.points, 10),
       }));
+
+  const platformOptions = buildPlatformOptions(allTrendViews);
+  const trendViews = filterTrendsByPlatform(allTrendViews, platformFilter);
+
+  // 切换区间后平台列表可能变化，失效的筛选值回到「全部平台」，避免停在空结果上。
+  useEffect(() => {
+    if (platformFilter !== 'all' && !platformOptions.some((option) => option.value === platformFilter)) {
+      setPlatformFilter('all');
+    }
+  }, [platformOptions, platformFilter]);
 
   const opportunityViews = summary ? toSignalViews(summary.Opportunities ?? []) : fallbackOpportunities;
   const riskViews = summary ? toSignalViews(summary.Risks ?? []) : fallbackRisks;
@@ -400,34 +426,61 @@ const HomeView = () => {
       <Panel>
         <PanelHeader
           eyebrow="平台态势"
-          title="最近 5 天"
-          description="三条指标各自按自身峰值归一化，用于比较走势形状；具体数值见指标卡，环比按日均播放计算。"
+          title={`最近 ${toDays(rangeDays)} 天`}
+          description="三条指标各自按自身峰值归一化，用于比较走势形状；具体数值见指标卡，环比按日均播放计算。每平台最多 10 个采样点，30 天区间等间隔取样，首尾日期都保留。"
           actions={<TrendLegend />}
         />
-        <PanelBody className="grid gap-4 lg:grid-cols-3">
-          {trendViews.map((item) => {
-            const latest = item.points[item.points.length - 1];
+        <PanelBody className="space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-3">
+              <SegmentedTabs
+                label="走势时间范围"
+                value={rangeDays}
+                options={RANGE_OPTIONS}
+                onChange={setRangeDays}
+              />
+              <SegmentedTabs
+                label="平台筛选"
+                value={platformFilter}
+                options={platformOptions}
+                onChange={setPlatformFilter}
+              />
+            </div>
+            <p className="text-xs tabular-nums text-muted-foreground">
+              {summary ? `数据区间 ${summary.RangeStart} 至 ${summary.RangeEnd}` : '静态示例数据 · 接口未连接'}
+              {summaryStatus === 'loading' ? ' · 正在刷新' : ''}
+            </p>
+          </div>
 
-            return (
-              <article key={item.platform} className="rounded-2xl border border-border/60 bg-background/60 p-5">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-base font-semibold tracking-tight">{item.platform}</p>
-                    <p className="mt-1 text-xs text-muted-foreground">最近 {item.points.length} 天</p>
-                  </div>
-                  <StatusPill tone={item.tone}>{item.changeRate}</StatusPill>
-                </div>
+          {trendViews.length === 0 ? (
+            <EmptyState compact title="该平台在区间内暂无走势数据" description="换一个平台或时间范围再试。" />
+          ) : (
+            <div className="grid gap-4 lg:grid-cols-3" aria-busy={summaryStatus === 'loading'}>
+              {trendViews.map((item) => {
+                const latest = item.points[item.points.length - 1] ?? { views: 0, comments: 0, shares: 0 };
 
-                <TrendChart className="mt-4" points={item.points} platform={item.platform} />
+                return (
+                  <article key={item.platformKey} className="rounded-2xl border border-border/60 bg-background/60 p-5">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-base font-semibold tracking-tight">{item.platformLabel}</p>
+                        <p className="mt-1 text-xs text-muted-foreground">{item.points.length} 个采样点</p>
+                      </div>
+                      <StatusPill tone={item.tone}>{item.changeRate}</StatusPill>
+                    </div>
 
-                <dl className="mt-4 grid grid-cols-3 gap-2">
-                  <MetricTile label="浏览" value={formatCompactNumber(latest.views)} />
-                  <MetricTile label="评论" value={formatCompactNumber(latest.comments)} />
-                  <MetricTile label="转发" value={formatCompactNumber(latest.shares)} />
-                </dl>
-              </article>
-            );
-          })}
+                    <TrendChart className="mt-4" points={item.points} platform={item.platformLabel} />
+
+                    <dl className="mt-4 grid grid-cols-3 gap-2">
+                      <MetricTile label="浏览" value={formatCompactNumber(latest.views)} />
+                      <MetricTile label="评论" value={formatCompactNumber(latest.comments)} />
+                      <MetricTile label="转发" value={formatCompactNumber(latest.shares)} />
+                    </dl>
+                  </article>
+                );
+              })}
+            </div>
+          )}
         </PanelBody>
       </Panel>
 

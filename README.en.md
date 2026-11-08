@@ -50,7 +50,7 @@ On 2026-11-03 the repository moved to **`shuishui313/MediaMgDashboard`** (the ol
 
 | Capability | Status | Notes |
 | --- | --- | --- |
-| Workbench home (`/`) | Done (every block is API-backed) | Four KPIs, platform trend, breakout opportunities, throttling risks, the three execution lists (deals / plans / todos), and the management overview are all returned live by `DashboardManager.GetSummary` |
+| Workbench home (`/`) | Done (every block is API-backed) | Four KPIs, platform trend, breakout opportunities, throttling risks, the three execution lists (deals / plans / todos), and the management overview are all returned live by `DashboardManager.GetSummary`. The platform panel switches between 7 / 14 / 30 days and filters by platform |
 | Role-based views | Done (frontend) | The default execution list follows the role; `admin` also sees the management overview |
 | API permissions | First batch wired | Thresholds are `admin` only. Account and metric writes are limited to `admin` / `operations`. Unauthorized calls return 403 plus a Chinese reason. See [Roles and permissions](#roles-and-permissions) |
 | Audit log | Done | 11 kinds of writes land in `AuditLog`. `/settings` can filter and expand field-level diffs. Admin read only. Retained 90 days |
@@ -431,7 +431,7 @@ Every page uses the components under `react-app/src/components/dashboard/`. New 
 | `SectionHeader` | `eyebrow + title + description + actions`, optional icon |
 | `StatusPill` | Five semantic status colors. Fixed 24px height, tabular figures |
 | `SegmentedTabs` | Segmented control with `role="tablist"` / `aria-selected` |
-| `TrendChart` / `TrendLegend` | Multi-metric trend, each series normalized to its own peak. Colors from `chart-1` / `info` / `destructive` |
+| `TrendChart` / `TrendLegend` | Multi-metric trend, each series normalized to its own peak. Colors from `chart-1` / `info` / `destructive`. The home page samples the selected range evenly, up to 10 points per platform, keeping both end dates |
 
 Conventions:
 
@@ -496,7 +496,7 @@ Pages charges for private repositories. This repository is public, and Pages is 
 ### P1 — Make the pages usable and trustworthy
 
 5. ~~**States and feedback.** Shared loading skeleton, empty, and error-retry states.~~ — Done. The three shared states live in `components/dashboard/`; no-permission routes to `/unauthorized`.
-6. **Chart interaction.** Range switch (5 points / week / month), hover values, platform filter, and a normalization note next to the legend.
+6. **Chart interaction.** The 7 / 14 / 30 day switch and the platform filter are done (see the platform panel). Remaining: hover values and a normalization note next to the legend.
 7. **Platform connections.** Authorization status, sync jobs, failure retry, and throttling alerts, matching the home “sync error” metric.
 
 ### P2 — Experience and the management view
