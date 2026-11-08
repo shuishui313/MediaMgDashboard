@@ -1,4 +1,5 @@
 import type { SegmentedOption } from '@/components/dashboard/SegmentedTabs';
+import { formatCompactNumber } from '@/lib/format';
 
 /** 首页平台态势的时间范围；后端 GetSummary 会把 Days 钳制在 3–90。 */
 export const RANGE_OPTIONS = [
@@ -47,3 +48,15 @@ export const filterTrendsByPlatform = <T extends { platformKey: string }>(
   trends: T[],
   platform: string,
 ): T[] => (platform === 'all' ? trends : trends.filter((item) => item.platformKey === platform));
+
+/** 结构类型，避免 utils 反向依赖视图组件。 */
+export type TrendPointLike = {
+  label: string;
+  views: number;
+  comments: number;
+  shares: number;
+};
+
+/** hover / 键盘聚焦时，读屏标签与数值条共用同一句话，避免两处文案不一致。 */
+export const describeTrendPoint = (point: TrendPointLike): string =>
+  `${point.label} · 浏览 ${formatCompactNumber(point.views)} · 评论 ${formatCompactNumber(point.comments)} · 转发 ${formatCompactNumber(point.shares)}`;

@@ -431,7 +431,7 @@ POST /api/stream   → NDJSON 流式返回（方法返回 IAsyncEnumerable<T>）
 | `SectionHeader` | `eyebrow + 标题 + 说明 + 右侧操作`，支持图标 |
 | `StatusPill` | 5 种语义色状态标签，固定 24px 高、等宽数字 |
 | `SegmentedTabs` | 分段切换，带 `role="tablist"` / `aria-selected` |
-| `TrendChart` / `TrendLegend` | 多指标走势，按各自峰值归一化，颜色取自 `chart-1` / `info` / `destructive`；首页按所选区间等间隔采样，每平台最多 10 个点，首尾日期保留 |
+| `TrendChart` / `TrendLegend` | 多指标走势，按各自峰值归一化，颜色取自 `chart-1` / `info` / `destructive`；首页按所选区间等间隔采样（最多 10 点、首尾保留），hover 或 Tab 聚焦可读当天三项数值，图例旁附归一化说明 |
 
 约定：
 
@@ -501,7 +501,7 @@ git status --ignored --short | grep -E "\.env|appsettings"
 ### P1 — 让页面「可用、可信」
 
 5. ~~**状态与反馈**：统一 loading 骨架、空数据、错误重试组件~~ — 已完成（三态见「设计系统与 UI 规范」；无权限态走 `/unauthorized`）。
-6. **图表交互**：7 / 14 / 30 天切换与平台筛选已完成（见「平台态势」）；剩余 hover 数值与图例旁的归一化说明。
+6. **图表交互**：7 / 14 / 30 天切换、平台筛选、hover 数值与图例旁归一化说明均已完成。
 7. **平台连接**：账号授权状态、同步任务与失败重试、限流告警，对应首页「同步异常」指标。
 
 ### P2 — 体验与管理视角

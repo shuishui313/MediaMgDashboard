@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { TrendPoint } from '@/components/dashboard/TrendChart';
 import {
   RANGE_OPTIONS,
+  describeTrendPoint,
   buildPlatformOptions,
   filterTrendsByPlatform,
   sampleTrendPoints,
@@ -78,5 +79,19 @@ describe('filterTrendsByPlatform', () => {
 
   it('未知平台返回空数组，由页面显示空态', () => {
     expect(filterTrendsByPlatform(trends, 'unknown')).toEqual([]);
+  });
+});
+
+describe('describeTrendPoint', () => {
+  it('把三项数值按统一缩写拼成一句话', () => {
+    expect(describeTrendPoint({ label: '11-08', views: 12000, comments: 300, shares: 0 })).toBe(
+      '11-08 · 浏览 1.2万 · 评论 300 · 转发 0',
+    );
+  });
+
+  it('非法数值显示为 -，不抛错', () => {
+    expect(describeTrendPoint({ label: '11-09', views: Number.NaN, comments: 0, shares: 0 })).toBe(
+      '11-09 · 浏览 - · 评论 0 · 转发 0',
+    );
   });
 });

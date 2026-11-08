@@ -427,8 +427,10 @@ const HomeView = () => {
         <PanelHeader
           eyebrow="平台态势"
           title={`最近 ${toDays(rangeDays)} 天`}
-          description="三条指标各自按自身峰值归一化，用于比较走势形状；具体数值见指标卡，环比按日均播放计算。每平台最多 10 个采样点，30 天区间等间隔取样，首尾日期都保留。"
-          actions={<TrendLegend />}
+          description="三条指标各自按自身峰值归一化，用于比较走势形状；具体数值见指标卡，环比按日均播放计算。每平台最多 10 个采样点，30 天区间等间隔取样，首尾日期都保留；悬停或用 Tab 聚焦数据点可读取当天三项数值。"
+          actions={
+            <TrendLegend note="三条线各自按自身峰值归一化，只比走势形状；绝对值见指标卡与 hover 提示。" />
+          }
         />
         <PanelBody className="space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">

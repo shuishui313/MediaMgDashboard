@@ -12,14 +12,14 @@
 >
 > 最少必写：日期与轮次 · 分支与提交 / 远端 · 运行环境与凭据 · 改动文件 · 测试结果 · 卡点 · 下一轮第一件事与接手命令 · 本轮遵守的规则。
 
-### 2026-11-08 · 第 2 轮
+### 2026-11-08 · 第 3 轮
 
 | 项 | 值 |
 | --- | --- |
-| 分支 / 提交 | `cloud-dev`，第 1 轮功能 `b4c687a`、日志 `225ecf2`、交接规则 `21b5922`；本轮提交以 `git log -1` 为准（提交号会变，别写死）。`main` = `37e9de2`，**未改动** |
+| 分支 / 提交 | `cloud-dev`，历史提交 `b4c687a`（T01）、`225ecf2`、`21b5922`（交接规则）、`66d8016`（T02）；本轮提交以 `git log -1` 为准（提交号会变，别写死）。`main` = `37e9de2`，**未改动** |
 | 远端 | `origin` = `shuishui313/MediaMgDashboard`，`cloud-dev` 已 push；PR 入口 `https://github.com/shuishui313/MediaMgDashboard/pull/new/cloud-dev` |
 | 工作区 | box 云电脑 `~/project`，`git status` 干净；`run.log` 已被 `.gitignore` 排除 |
-| 清单 / 日志 | `progress/ROADMAP.md`（28 项，T01 / T02 已完成）、`progress/2026-11-08.md`（第 1 轮）、`progress/2026-11-08-2.md`（本轮） |
+| 清单 / 日志 | `progress/ROADMAP.md`（28 项，T01 / T02 / T03 已完成）、`progress/2026-11-08.md`、`-2.md`、`-3.md` |
 
 **运行环境**
 
@@ -31,45 +31,46 @@
 
 **本轮改动文件**
 
-- 新增 `react-app/src/utils/dashboardRange.ts`、`react-app/src/utils/dashboardRange.test.ts`（8 条用例）
-- 修改 `react-app/src/views/ExampleView.tsx`（范围 / 平台筛选 / 采样 / 面板文案）
-- 修改 `README.md`、`README.en.md`（各 3 处完成度描述，中英同步）
-- 修改 `progress/ROADMAP.md`（勾选 T02、收窄 T03）、`HANDOFF.md`（本节）
-- 新增 `progress/2026-11-08-2.md`
+- 修改 `react-app/src/components/dashboard/TrendChart.tsx`（透明 hit-area、`aria-live` 数值条、当前点高亮、`TrendLegend` 可选 `note`）
+- 修改 `react-app/src/utils/dashboardRange.ts`（新增 `describeTrendPoint`）、`react-app/src/utils/dashboardRange.test.ts`（+2 条）
+- 修改 `react-app/src/views/ExampleView.tsx`（面板描述、图例归一化说明）
+- 修改 `README.md`、`README.en.md`（各 2 处，中英同步）
+- 修改 `progress/ROADMAP.md`（勾选 T03）、`HANDOFF.md`（本节）
+- 新增 `progress/2026-11-08-3.md`
 
 **实现要点（接手前先看）**
 
-- 时间范围：`rangeDays` 状态 + `SegmentedTabs`，`DashboardManager.GetSummary({ Days: toDays(rangeDays) })`；后端把 `Days` 钳制在 3–90，本轮没有改后端。
-- 平台筛选：`filterTrendsByPlatform` 只在展示层按 `Platform` 过滤，**不影响 KPI / 机会 / 风险卡**，这是刻意设计；选项由 `buildPlatformOptions` 从当前趋势数据生成，失效值自动回到 `all`。
-- 采样：`sampleTrendPoints(points, 10)` 等间隔取点、首尾保留、不做平均；`ExampleView.tsx` 里两处调用（真实数据与静态兜底），要改上限改这两处。空 `points` 已用默认值保护 `MetricTile`。
-- 切换范围时保留旧 `summary` 并标「正在刷新」（`aria-busy`），避免闪现「静态示例数据」；首次加载的兜底行为未改。
-- `dashboardRange.ts` 是纯函数模块，新增逻辑优先放这里并配单测，别塞进视图。
+- hover：`TrendChart` 用 `hoverIndex` state，每个点一列透明 `<rect pointerEvents="all" tabIndex={0}>` 覆盖在曲线之上；`onMouseEnter` / `onFocus` 设置索引，`svg` 的 `onMouseLeave` 清空。`activeIndex = hoverIndex ?? points.length - 1`，默认展示最新点；blur 不清空，避免 Tab 切换闪烁。
+- 数值条在 svg 与 x 轴标签之间，`aria-live="polite"`；`describeTrendPoint`（`utils/dashboardRange.ts`）同时供 hit-area 的 `aria-label` 与数值条使用，别在两处写两套文案。`svg` 保留 `role="img"`（AGENTS 要求）。
+- `TrendLegend` 新增可选 `note` prop，首页传入归一化说明；不传时行为与以前一致。
+- T02 遗产：`GetSummary({ Days: toDays(rangeDays) })` 三档；平台筛选只在展示层过滤、不改 KPI / 信号口径；`sampleTrendPoints(points, 10)` 等间隔采样、首尾保留，`ExampleView.tsx` 里两处调用。
+- 新增展示层逻辑优先放 `utils/dashboardRange.ts` 并配单测，别塞进视图；没有引入图表库。
 
 **测试结果**（全部在 box 上跑）
 
 | 检查 | 结果 |
 | --- | --- |
 | `npm run check-ts` | 0 error |
-| `npx vitest run --mode test` | 4 文件 / 30 条全通过（第 1 轮 22 + 新增 8） |
+| `npx vitest run --mode test` | 4 文件 / 32 条全通过（第 2 轮 30 + 新增 2） |
 | `npm run lint` | 0 error，4 个既有 `components/ui/*` react-refresh warning |
 | `npm run build` | 成功 |
 | `dotnet build Services/Services.sln -c Release` | 0 error（2 条 Marten NU1904 历史告警） |
 | `dotnet test` | 84 / 84 通过 |
-| 探活 | API `5123`、前端 `3000`、新路由 `/connections/douyin` 均 200；vite watcher `Found 0 errors` |
+| 探活 | API `5123`、前端 `3000` 均 200；vite watcher `Found 0 errors` |
 
 **卡点与处理**
 
-- 无新增阻塞。平台筛选不联动 KPI / 信号是设计选择，若以后要联动，需要给 `GetSummary` 增加平台参数（走 DTO → Manager → api 封装，别在前端偷偷改口径）。
-- 首次加载时 `summary` 为空仍会显示带「静态示例数据」标记的兜底卡片，属于既有行为，本轮未动。
+- 无新增阻塞。hover 用原生 SVG + React state 实现，hit-area 覆盖在曲线之上，原生 `<title>` tooltip 与数值条并存。
+- 首次加载 `summary` 为空仍显示带「静态示例数据」标记的兜底卡片，属于既有行为，本轮未动。
 - T14–T18、T25 需要飞书 / 平台开放平台 / Supabase 凭据，等用户提供后单独联调。
 
 **下一轮第一件事**
 
-- T03 图表交互：hover 数值（沿用 `TrendChart` 的 `<title>` 与数据点，别引入图表库）、图例旁补归一化说明；见 `progress/ROADMAP.md`。
+- T04 暗色模式：壳层主题切换 + 持久化。先确认 `index.css` / tailwind 里是否已有 `.dark` 变量，再决定只做切换器还是补色板；只用语义色，别写硬编码颜色。见 `progress/ROADMAP.md`。
 - 接手命令：
 
 ```bash
-cd ~/project && git status -sb && git log --oneline -4 && tmux ls && cat progress/ROADMAP.md && sed -n '1,70p' HANDOFF.md
+cd ~/project && git status -sb && git log --oneline -5 && tmux ls && cat progress/ROADMAP.md && sed -n '1,80p' HANDOFF.md
 ```
 
 - 每轮固定动作见 `progress/ROADMAP.md`「每轮固定动作」：写完 `cat` 确认 → 全套测试 → 写 `progress/<日期>.md` → **重写本文件第 0 节** → `git commit` → `git push origin cloud-dev`，不动 `main`。

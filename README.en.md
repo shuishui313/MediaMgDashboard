@@ -431,7 +431,7 @@ Every page uses the components under `react-app/src/components/dashboard/`. New 
 | `SectionHeader` | `eyebrow + title + description + actions`, optional icon |
 | `StatusPill` | Five semantic status colors. Fixed 24px height, tabular figures |
 | `SegmentedTabs` | Segmented control with `role="tablist"` / `aria-selected` |
-| `TrendChart` / `TrendLegend` | Multi-metric trend, each series normalized to its own peak. Colors from `chart-1` / `info` / `destructive`. The home page samples the selected range evenly, up to 10 points per platform, keeping both end dates |
+| `TrendChart` / `TrendLegend` | Multi-metric trend, each series normalized to its own peak. Colors from `chart-1` / `info` / `destructive`. The home page samples the range evenly (up to 10 points, both end dates kept), hovering or tabbing a point reads that day's three values, and the legend carries a normalization note |
 
 Conventions:
 
@@ -496,7 +496,7 @@ Pages charges for private repositories. This repository is public, and Pages is 
 ### P1 — Make the pages usable and trustworthy
 
 5. ~~**States and feedback.** Shared loading skeleton, empty, and error-retry states.~~ — Done. The three shared states live in `components/dashboard/`; no-permission routes to `/unauthorized`.
-6. **Chart interaction.** The 7 / 14 / 30 day switch and the platform filter are done (see the platform panel). Remaining: hover values and a normalization note next to the legend.
+6. **Chart interaction.** The 7 / 14 / 30 day switch, platform filter, hover values, and the normalization note next to the legend are all done.
 7. **Platform connections.** Authorization status, sync jobs, failure retry, and throttling alerts, matching the home “sync error” metric.
 
 ### P2 — Experience and the management view
