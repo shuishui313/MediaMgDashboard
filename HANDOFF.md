@@ -1,6 +1,6 @@
 # HANDOFF
 
-> 交接文档 · 更新于 2026-11-08（每轮更新，最新一轮见第 0 节）
+> 交接文档 · 更新于 2026-11-10（每轮更新，最新一轮见第 0 节）
 > 仓库：`shuishui313/MediaMgDashboard`（public，2026-11-03 从 `gsspai/mediaai` 迁入） · 当前工作分支 `cloud-dev`（不动 `main`） · box 云电脑 `~/project`，工作区干净
 > 第 2 节及以后是 2026-11-05 的历史记录，描述当时状态；当前状态以第 0 节与 README 为准。
 
@@ -12,46 +12,50 @@
 >
 > 最少必写：日期与轮次 · 分支与提交 / 远端 · 运行环境与凭据 · 改动文件 · 测试结果 · 卡点 · 下一轮第一件事与接手命令 · 本轮遵守的规则。
 
-### 2026-11-08 · 第 3 轮
+### 2026-11-10 · 第 4 轮
 
 | 项 | 值 |
 | --- | --- |
-| 分支 / 提交 | `cloud-dev`，历史提交 `b4c687a`（T01）、`225ecf2`、`21b5922`（交接规则）、`66d8016`（T02）；本轮提交以 `git log -1` 为准（提交号会变，别写死）。`main` = `37e9de2`，**未改动** |
+| 分支 / 提交 | `cloud-dev`，历史提交 `b4c687a`（T01）、`21b5922`（交接规则）、`66d8016`（T02）、`d080a4a`（T03）；本轮提交以 `git log -1` 为准（提交号会变，别写死）。`main` = `37e9de2`，**未改动** |
 | 远端 | `origin` = `shuishui313/MediaMgDashboard`，`cloud-dev` 已 push；PR 入口 `https://github.com/shuishui313/MediaMgDashboard/pull/new/cloud-dev` |
 | 工作区 | box 云电脑 `~/project`，`git status` 干净；`run.log` 已被 `.gitignore` 排除 |
-| 清单 / 日志 | `progress/ROADMAP.md`（28 项，T01 / T02 / T03 已完成）、`progress/2026-11-08.md`、`-2.md`、`-3.md` |
+| 清单 / 日志 | `progress/ROADMAP.md`（28 项，T01–T04 已完成）、`progress/2026-11-08.md`、`-2.md`、`-3.md`、`progress/2026-11-10.md`（本轮） |
 
 **运行环境**
 
 - 所有操作只在 box 云电脑 `~/project`，通过 box `shell` 完成。本机文件与终端一律不碰，禁止本地文件编辑工具与本地终端；写完每个文件都要 `cat` 确认。
-- .NET SDK 8.0.418 在 `~/.dotnet`（命令前 `export PATH="$HOME/.dotnet:$PATH"`），`npm ci` / `dotnet restore` 已完成。
-- tmux：`mediaai-api`（`ASPNETCORE_ENVIRONMENT=Development`，`http://localhost:5123`，本地 JSON，不连 Supabase）与 `mediaai-web`（`VITE_API_URL=http://localhost:5123`，`http://localhost:3000`）；日志追加到 `~/project/run.log`。两个会话要一起重启。
+- **box 会休眠**：11-08 之后进入 `hibernated`，本轮先 `box_ensure` 唤醒（`wait: true`，首次可能超时，重查 `box_status` 再 ensure 一次即可）。唤醒后项目文件、git 分支、tmux 会话、gh 登录态都保留。
+- `box_status` 提示镜像可升级 `sbxdesk:v13 → v15`，**本轮未升级**，等用户明确要求；别在迭代里顺手升级，会动环境。
+- .NET SDK 8.0.418 在 `~/.dotnet`（命令前 `export PATH="$HOME/.dotnet:$PATH"`），Node v24.21.0，`npm ci` / `dotnet restore` 已完成。
+- tmux：`mediaai-api`（`ASPNETCORE_ENVIRONMENT=Development`，`http://localhost:5123`，本地 JSON，不连 Supabase）与 `mediaai-web`（`VITE_API_URL=http://localhost:5123`，`http://localhost:3000`）；日志追加到 `~/project/run.log`。休眠恢复后先探活，不通就两个会话一起重启。
 - GitHub CLI 已 `gh auth login --web` + `gh auth setup-git`，凭据在 `~/.config/gh/hosts.yml`，`git push` 可用。网页登录 GitHub 不等于 CLI 凭据。
 - 模型：用户已在 CodeBuddy IDE 选定 **HY4**，本轮及后续由它执行；不要再猜模型标识。
+- **外部凭据仍缺**：本轮检查过项目目录与环境变量，没有飞书 / 平台开放平台 / Supabase 的新凭据，也没有新装依赖。T14–T18、T25 要等用户提供后再联调。
 
 **本轮改动文件**
 
-- 修改 `react-app/src/components/dashboard/TrendChart.tsx`（透明 hit-area、`aria-live` 数值条、当前点高亮、`TrendLegend` 可选 `note`）
-- 修改 `react-app/src/utils/dashboardRange.ts`（新增 `describeTrendPoint`）、`react-app/src/utils/dashboardRange.test.ts`（+2 条）
-- 修改 `react-app/src/views/ExampleView.tsx`（面板描述、图例归一化说明）
+- 新增 `react-app/src/utils/theme.ts`、`react-app/src/utils/theme.test.ts`（7 条用例）
+- 新增 `react-app/src/components/dashboard/ThemeToggle.tsx`
+- 修改 `react-app/src/main.tsx`（首帧前 `bootstrapTheme()`）、`react-app/src/App.tsx`（壳层挂载切换器）
 - 修改 `README.md`、`README.en.md`（各 2 处，中英同步）
-- 修改 `progress/ROADMAP.md`（勾选 T03）、`HANDOFF.md`（本节）
-- 新增 `progress/2026-11-08-3.md`
+- 修改 `progress/ROADMAP.md`（勾选 T04）、`HANDOFF.md`（本节）
+- 新增 `progress/2026-11-10.md`
 
 **实现要点（接手前先看）**
 
-- hover：`TrendChart` 用 `hoverIndex` state，每个点一列透明 `<rect pointerEvents="all" tabIndex={0}>` 覆盖在曲线之上；`onMouseEnter` / `onFocus` 设置索引，`svg` 的 `onMouseLeave` 清空。`activeIndex = hoverIndex ?? points.length - 1`，默认展示最新点；blur 不清空，避免 Tab 切换闪烁。
-- 数值条在 svg 与 x 轴标签之间，`aria-live="polite"`；`describeTrendPoint`（`utils/dashboardRange.ts`）同时供 hit-area 的 `aria-label` 与数值条使用，别在两处写两套文案。`svg` 保留 `role="img"`（AGENTS 要求）。
-- `TrendLegend` 新增可选 `note` prop，首页传入归一化说明；不传时行为与以前一致。
-- T02 遗产：`GetSummary({ Days: toDays(rangeDays) })` 三档；平台筛选只在展示层过滤、不改 KPI / 信号口径；`sampleTrendPoints(points, 10)` 等间隔采样、首尾保留，`ExampleView.tsx` 里两处调用。
-- 新增展示层逻辑优先放 `utils/dashboardRange.ts` 并配单测，别塞进视图；没有引入图表库。
+- 暗色色板本来就有：`react-app/src/default.css` 里 `:root` / `.dark` 双套 CSS 变量 + `@custom-variant dark`，`components/ui/*` 也带 `dark:` 变体。**不要再补色板，也不要写硬编码颜色**（AGENTS 明令禁止）。本轮只加切换与持久化。
+- `utils/theme.ts` 是纯函数 + 少量 DOM 引导：`resolveInitialTheme(stored, prefersDark)` 已保存优先，否则跟随系统；`applyTheme` 只 `document.documentElement.classList.toggle('dark', ...)`，配色交给 CSS。
+- `main.tsx` 在 `ReactDOM.createRoot` 前调用 `bootstrapTheme()`，避免暗色偏好用户首帧闪白；`ThemeToggle` 用 `readThemePreference()` 初始化，`useEffect` 同步 class，切换写 `localStorage` 的 `mediaai-theme`。
+- `ThemeToggle` 挂在 `App.tsx` 的 `TooltipProvider` 内、右下角 `fixed z-50`，所有路由（含 `/login`）可见；`aria-pressed` + 中英一致 aria-label；未手动选过时监听 `matchMedia` 的 change。
+- T02 / T03 遗产：`GetSummary({ Days: toDays(rangeDays) })` 三档、平台筛选只在展示层、`sampleTrendPoints(points, 10)` 两处调用；`TrendChart` 透明 hit-area + `aria-live` 数值条、`describeTrendPoint` 统一文案、`TrendLegend` 可选 `note`。
+- 新增展示层逻辑优先放 `utils/` 并配单测，别塞进视图。
 
 **测试结果**（全部在 box 上跑）
 
 | 检查 | 结果 |
 | --- | --- |
 | `npm run check-ts` | 0 error |
-| `npx vitest run --mode test` | 4 文件 / 32 条全通过（第 2 轮 30 + 新增 2） |
+| `npx vitest run --mode test` | 5 文件 / 39 条全通过（第 3 轮 32 + 新增 7） |
 | `npm run lint` | 0 error，4 个既有 `components/ui/*` react-refresh warning |
 | `npm run build` | 成功 |
 | `dotnet build Services/Services.sln -c Release` | 0 error（2 条 Marten NU1904 历史告警） |
@@ -60,17 +64,17 @@
 
 **卡点与处理**
 
-- 无新增阻塞。hover 用原生 SVG + React state 实现，hit-area 覆盖在曲线之上，原生 `<title>` tooltip 与数值条并存。
+- 无新增阻塞。`index.html` 的 `theme-color` meta 仍是 `#ffffff`，暗色下手机状态栏可能不协调；没改成硬编码深色（AGENTS 禁止），后续可从 CSS 变量计算后写入。
 - 首次加载 `summary` 为空仍显示带「静态示例数据」标记的兜底卡片，属于既有行为，本轮未动。
-- T14–T18、T25 需要飞书 / 平台开放平台 / Supabase 凭据，等用户提供后单独联调。
+- box 镜像升级提示未处理；外部凭据仍缺，T14–T18 / T25 待联调。
 
 **下一轮第一件事**
 
-- T04 暗色模式：壳层主题切换 + 持久化。先确认 `index.css` / tailwind 里是否已有 `.dark` 变量，再决定只做切换器还是补色板；只用语义色，别写硬编码颜色。见 `progress/ROADMAP.md`。
+- T05 移动端：列表页表格转卡片，触控与字号适配。先看 `BusinessView` / `PlansView` / `ConnectionsView` 里的 `Table` 用法，优先抽一个可复用的响应式列表容器，别每个页面各写一套；只用语义色。见 `progress/ROADMAP.md`。
 - 接手命令：
 
 ```bash
-cd ~/project && git status -sb && git log --oneline -5 && tmux ls && cat progress/ROADMAP.md && sed -n '1,80p' HANDOFF.md
+cd ~/project && git status -sb && git log --oneline -6 && tmux ls && cat progress/ROADMAP.md && sed -n '1,90p' HANDOFF.md
 ```
 
 - 每轮固定动作见 `progress/ROADMAP.md`「每轮固定动作」：写完 `cat` 确认 → 全套测试 → 写 `progress/<日期>.md` → **重写本文件第 0 节** → `git commit` → `git push origin cloud-dev`，不动 `main`。

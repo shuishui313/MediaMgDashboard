@@ -65,7 +65,7 @@ On 2026-11-03 the repository moved to **`shuishui313/MediaMgDashboard`** (the ol
 | Dashboard API | Usable | `DashboardManager.GetSummary` (KPIs, platform trend, opportunity / risk signals, three execution lists, management overview, data source). `PlatformAccountManager`, `MetricManager`, `DealManager`, `ContentPlanManager`, and `TodoManager` are in place. Analytics Managers are not |
 | Data model | In place | `PlatformAccount`, `MetricDaily` (including `Source` / `RecordedBy`), `Deal`, `ContentPlan`, `TodoItem` (manual todos) |
 | Login | Usable | `/login` is username and password, then returns to the path the user came from. Feishu SSO is not wired |
-| Dark mode | Partial | Tokens are ready. There is no theme toggle on the pages yet |
+| Dark mode | Done | Theme toggle in the app shell; the choice persists in `localStorage` and follows the system preference until the user picks one, with no light flash on first paint |
 
 > Home KPI cards, the platform trend, breakout opportunities, and throttling risks all come from the API. Every card and every signal carries a source label (API sync / manual entry / CSV import / development seed). The three Execution list tabs (deals, plans, todos) and the management overview also come from `DashboardManager.GetSummary().Execution`, with no mock fallback: a failed call shows an empty state. Only when `GetSummary` fails entirely do the KPI and signal blocks degrade to labelled “static sample data” fallback cards.
 
@@ -502,7 +502,7 @@ Pages charges for private repositories. This repository is public, and Pages is 
 ### P2 — Experience and the management view
 
 8. **Management metric definitions.** Configurable metrics, definition copy, and export.
-9. **Dark mode.** A theme toggle on the app shell. Tokens are ready, and pages no longer hard-code colors.
+9. **Dark mode.** The app-shell toggle and persistence are done (`utils/theme.ts` + `ThemeToggle`). Dark tokens are ready, and pages hard-code no colors.
 10. **Mobile.** Tables become card lists; touch targets and type scale adapt. Add end-to-end coverage for the key pages.
 
 ### Acceptance reference

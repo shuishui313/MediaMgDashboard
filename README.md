@@ -65,7 +65,7 @@ MediaAI 面向个人自媒体矩阵的日常运营：把多个平台账号的播
 | 看板接口 | 可用 | `DashboardManager.GetSummary`（KPI、平台走势、机会 / 风险信号、执行列表三块、管理层概览、数据来源）；`PlatformAccountManager`、`MetricManager`、`DealManager`、`ContentPlanManager`、`TodoManager` 均已落地；分析类 Manager 未建 |
 | 数据模型 | 已建立 | `PlatformAccount`、`MetricDaily`（含 `Source` / `RecordedBy`）、`Deal`（商务单）、`ContentPlan`（内容计划）、`TodoItem`（人工待办） |
 | 登录 | 可用 | `/login` 账号密码登录，成功后回到来源路径；飞书免登未接入 |
-| 暗色模式 | 部分 | Token 已就绪，但页面尚无主题切换入口 |
+| 暗色模式 | 已完成 | 壳层右下角主题切换，选择写入 `localStorage`；未选择时跟随系统偏好，首帧不闪白 |
 
 > 首页 KPI 卡、平台走势、爆款机会与限流风险均由接口返回，每张卡与每条信号都带来源说明（接口同步 / 手工录入 / CSV 导入 / 开发态种子）。「执行列表」三个 Tab（商务、计划、待办）与「管理层概览」同样来自 `DashboardManager.GetSummary().Execution`，无 mock 兜底，接口失败时显示空态文案。只有 `GetSummary` 整个失败时，KPI 与信号区块才降级为带「静态示例数据」标记的兜底卡片。
 
@@ -507,7 +507,7 @@ git status --ignored --short | grep -E "\.env|appsettings"
 ### P2 — 体验与管理视角
 
 8. **管理层指标口径**：指标可配置、口径说明、导出。
-9. **暗色模式**：在应用壳层加主题切换（token 已就绪，页面已无硬编码颜色）。
+9. **暗色模式**：壳层主题切换与持久化已完成（`utils/theme.ts` + `ThemeToggle`），深色 token 已就绪，页面无硬编码颜色。
 10. **移动端**：表格转为卡片列表，触控区域与字号适配；补充关键页面端到端测试。
 
 ### 验收参考
